@@ -81,8 +81,7 @@ bool TimeSync(unsigned long &spm, bool &synced)
 
   isSynced = true;
   synced = isSynced;
-  //resyncDelay = 3600 * 1000; // Every hour
-  resyncDelay = 60 * 1000; // Every minute
+  resyncDelay = 3600 * 1000; // Every hour
 
   spm = (unsigned long)s;
   return true;
