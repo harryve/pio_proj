@@ -6,6 +6,7 @@
 #include <time.h>
 #include "hwdefs.h"
 #include "alarm.h"
+#include "button.h"
 #include "cred.h"
 
 WiFiClient wifiClient;
@@ -36,6 +37,8 @@ const uint8_t digits[10][8] = {
   {0b01110, 0b10001, 0b10001, 0b01110, 0b10001, 0b10001, 0b10001, 0b01110}, // 8
   {0b01110, 0b10001, 0b10001, 0b10001, 0b01111, 0b00001, 0b00001, 0b01110}  // 9
 };
+
+Button button2 = Button(BUTTON_SELECT_PIN);
 
 void setup() 
 {
@@ -129,6 +132,7 @@ void loop()
   struct tm timeinfo;
 
   alarmBuzzer.tick();
+  button2.Tick();
   ReadLdr();
 
   char c = Serial.read();
@@ -138,13 +142,15 @@ void loop()
       if (brightness < 100) {
         brightness++;
         FastLED.setBrightness(brightness);
+        FastLED.show();
       }
-      Serial.printf("Brightness = %d\n", brightness);
+      Serial.printf("Brightness = %d %d\n", brightness, digitalRead(BUTTON_SELECT_PIN));
     }
     if (c == 'd') {
       if (brightness > 0) {
         brightness--;
         FastLED.setBrightness(brightness);
+        FastLED.show();
       }
       Serial.printf("Brightness = %d\n", brightness);
     }
@@ -167,5 +173,5 @@ void loop()
     drawTime(timeinfo.tm_hour, timeinfo.tm_min, CRGB::Red);
     FastLED.show();
   }
-  delay(100);
+  //delay(100);
 }
