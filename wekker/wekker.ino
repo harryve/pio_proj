@@ -2,11 +2,13 @@
 #include <ArduinoMqttClient.h>
 #include <WiFi.h>
 #include <Wire.h>
-#include <FastLED.h>
+
 #include <time.h>
 #include "hwdefs.h"
+#include "display.h"
 #include "alarm.h"
 #include "button.h"
+#include "ldr.h"
 #include "cred.h"
 
 WiFiClient wifiClient;
@@ -19,29 +21,17 @@ const long  gmtOffset_sec = 3600;
 const int   daylightOffset_sec = 3600;
 
 static int brightness = 1;
+static bool alarmActive = false;
 
-CRGB leds[NUM_LEDS];
 
 Alarm alarmBuzzer = Alarm(BUZZER_PIN);
 
-// 5x8 (from HelvetiPixel.ttf) font for digits
-const uint8_t digits[10][8] = {
-  {0b01110, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b01110}, // 0
-  {0b00010, 0b00110, 0b01010, 0b00010, 0b00010, 0b00010, 0b00010, 0b00010}, // 1
-  {0b01110, 0b10001, 0b00001, 0b00010, 0b00100, 0b01000, 0b10000, 0b11111}, // 2
-  {0b01110, 0b10001, 0b00001, 0b00110, 0b00001, 0b00001, 0b10001, 0b01110}, // 3
-  {0b00001, 0b00011, 0b00101, 0b01001, 0b10001, 0b11111, 0b00001, 0b00001}, // 4
-  {0b11111, 0b10000, 0b10000, 0b11110, 0b00001, 0b00001, 0b10001, 0b01110}, // 5
-  {0b01110, 0b10001, 0b10000, 0b11110, 0b10001, 0b10001, 0b10001, 0b01110}, // 6
-  {0b11111, 0b00001, 0b00010, 0b00010, 0b00100, 0b00100, 0b01000, 0b01000}, // 7
-  {0b01110, 0b10001, 0b10001, 0b01110, 0b10001, 0b10001, 0b10001, 0b01110}, // 8
-  {0b01110, 0b10001, 0b10001, 0b10001, 0b01111, 0b00001, 0b00001, 0b01110}  // 9
-};
-
 void button2_event(Button::Event event)
 {
-  //using Button::Event;
-  if (event == Button::Event::SHORT_PRESS) {
+  using enum Button::Event;
+  if (event == SHORT_PRESS) {
+    alarmActive = alarmActive ? false : true;
+    DisplaySetAlarmActive(alarmActive);
     Serial.println("SP");
   }
   else {
@@ -54,13 +44,11 @@ Button button2 = Button(BUTTON_SELECT_PIN, button2_event);
 void setup() 
 {
   Serial.begin(115200);
-  pinMode(LDR_PIN, INPUT);
+  LdrInit();
 
-  //pinMode(27, INPUT_PULLUP);
-  //pinMode(26, INPUT_PULLUP);
-
-  FastLED.addLeds<WS2812B, DATA_PIN, GRB>(leds, NUM_LEDS);
-  FastLED.setBrightness(brightness);
+  DisplayInit();
+  DisplaySetBrightness(brightness);
+  DisplaySetAlarmActive(alarmActive);
 
   // Connect to Wi-Fi
   WiFi.begin(ssid, password);
@@ -85,45 +73,11 @@ void setup()
   configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
 }
 
-void setLED(int x, int y, CRGB color) {
-  if (x < 0 || x >= MATRIX_WIDTH || y < 0 || y >= MATRIX_HEIGHT) return;
-  int index = (y % 2 == 0) ? y * MATRIX_WIDTH + x : (y + 1) * MATRIX_WIDTH - 1 - x;
-  leds[index] = color;
-}
-
-void drawDigit(int x, int y, int digit, CRGB color) {
-  for (int row = 0; row < 8; row++) {
-    for (int col = 0; col < 5; col++) {
-      if (digits[digit][row] & (1 << (4 - col))) {
-        setLED(x + col, y + row, color);
-      }
-    }
-  }
-}
-
-void drawTime(int hours, int minutes, CRGB color) 
-{
-  // 5 1 5 3 5 1 5
-  // 0   6   14  20
-  int x = 3;
-  drawDigit(x + 0, 0, hours / 10, color);
-  drawDigit(x + 6, 0, hours % 10, color);
-  setLED(x + 12, 2, color);
-  setLED(x + 12, 5, color);
-  drawDigit(x + 14, 0, minutes / 10, color);
-  drawDigit(x + 20, 0, minutes % 10, color);
-}
 
 void ReadLdr()
 {
-  static unsigned long prevMillis = 0;
-
-  unsigned long currentMillis = millis();
-  if (currentMillis - prevMillis > 60000) {
-    prevMillis = currentMillis;
-
-    uint16_t val = analogRead(LDR_PIN);
-
+  int val;
+  if (LdrRead(&val)) {
     mqttClient.beginMessage("tele/wekker/sensor");
     char buf[16];
     buf[snprintf(buf, sizeof(buf) - 1, "%d", val)] = '\0';
@@ -131,6 +85,16 @@ void ReadLdr()
     mqttClient.endMessage();
 
     Serial.printf("LDR = %d\n", val);
+
+    brightness = val / 50;
+    if (brightness > 35) {
+      brightness = 35;
+    }
+    if (brightness < 1) {
+      brightness = 1;
+    }
+    Serial.printf("LDR brightness = %d\n", brightness);
+    DisplaySetBrightness(brightness);
   }  
 }
 
@@ -149,16 +113,14 @@ void loop()
     if (c == 'u') {
       if (brightness < 100) {
         brightness++;
-        FastLED.setBrightness(brightness);
-        FastLED.show();
+        DisplaySetBrightness(brightness);
       }
       Serial.printf("Brightness = %d %d\n", brightness, digitalRead(BUTTON_SELECT_PIN));
     }
     if (c == 'd') {
       if (brightness > 0) {
         brightness--;
-        FastLED.setBrightness(brightness);
-        FastLED.show();
+        DisplaySetBrightness(brightness);
       }
       Serial.printf("Brightness = %d\n", brightness);
     }
@@ -173,13 +135,11 @@ void loop()
   }
   if (dispTime != ((timeinfo.tm_hour * 100) + timeinfo.tm_min)) {
     dispTime = (timeinfo.tm_hour * 100) + timeinfo.tm_min;
-    if (dispTime == 600) {
+    if (alarmActive && (dispTime == 600)) {
       alarmBuzzer.trigger();
     }
     Serial.printf("Time = %d\n", dispTime);
-    FastLED.clear();
-    drawTime(timeinfo.tm_hour, timeinfo.tm_min, CRGB::Red);
-    FastLED.show();
+    DisplayDrawTime(timeinfo.tm_hour, timeinfo.tm_min);
   }
   //delay(100);
 }

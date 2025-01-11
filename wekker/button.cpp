@@ -8,13 +8,13 @@
 #define PRESSED     LOW
 #define RELEASED    HIGH
 
-Button::Button(int buttonPin, Button::EventCb eventCb)
+Button::Button(int buttonPin, Button::EventCb cb)
 {
   pin = buttonPin;
 
   pinMode(pin, INPUT_PULLUP);
 
-  eventCb = eventCb;
+  eventCb = cb;
   lastState = RELEASED;
   buttonState = RELEASED;
   pressedAt = 0;
@@ -41,7 +41,6 @@ void Button::Tick(void)
 
       if (buttonState == RELEASED) {     // Button released
         if (!longPress) {
-          Serial.println("Short press");
           if (eventCb != NULL) {
               eventCb(Event::SHORT_PRESS);
           }
@@ -54,7 +53,6 @@ void Button::Tick(void)
         if ((curTime - pressedAt) >= LONG_PRESSED_DELAY) {
           if (!longPress) {
             longPress = true;
-            Serial.println("Long press");
             if (eventCb != NULL) {
               eventCb(Event::LONG_PRESS);
             }
