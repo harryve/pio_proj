@@ -38,19 +38,27 @@ const uint8_t digits[10][8] = {
   {0b01110, 0b10001, 0b10001, 0b10001, 0b01111, 0b00001, 0b00001, 0b01110}  // 9
 };
 
-Button button2 = Button(BUTTON_SELECT_PIN);
+void button2_event(Button::Event event)
+{
+  //using Button::Event;
+  if (event == Button::Event::SHORT_PRESS) {
+    Serial.println("SP");
+  }
+  else {
+    Serial.println("LP");
+  }
+}
+
+Button button2 = Button(BUTTON_SELECT_PIN, button2_event);
 
 void setup() 
 {
   Serial.begin(115200);
   pinMode(LDR_PIN, INPUT);
 
-  //pinMode(15, INPUT_PULLDOWN);
-  pinMode(27, INPUT_PULLUP);
-  pinMode(26, INPUT_PULLUP);
+  //pinMode(27, INPUT_PULLUP);
+  //pinMode(26, INPUT_PULLUP);
 
-
-  tone(BUZZER_PIN, 600, 500);
   FastLED.addLeds<WS2812B, DATA_PIN, GRB>(leds, NUM_LEDS);
   FastLED.setBrightness(brightness);
 

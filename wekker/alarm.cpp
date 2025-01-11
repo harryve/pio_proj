@@ -15,6 +15,7 @@ Alarm::Alarm(int pin)
   buzzerPin = pin;
   state = IDLE;
   count = 0;
+  pinMode(buzzerPin, INPUT_PULLDOWN);
 }
     
 void Alarm::trigger()

@@ -9,9 +9,9 @@ public:
     LONG_PRESS
   };
 
-  /*using EventCb = void (*)(button::Event event);*/
+  using EventCb = void (*)(Button::Event event);
 
-  Button(int buttonPin/*, Button::EventCb eventCb*/);
+  Button(int buttonPin, Button::EventCb eventCb);
   void Tick(void);
 
 private:
@@ -20,6 +20,8 @@ private:
   int buttonState;
   unsigned long pressedAt;
   unsigned long lastEdgeAt;
+  bool longPress;
+  EventCb eventCb;
 };
 
 #endif // button_h
