@@ -1,4 +1,5 @@
 //#include <Arduino.h>
+#include <FastLED.h>
 #include <ArduinoMqttClient.h>
 #include <WiFi.h>
 #include <Wire.h>
@@ -20,6 +21,10 @@ const char* ntpServer = "ntp.harry.thuis";
 const long  gmtOffset_sec = 3600;
 const int   daylightOffset_sec = 3600;
 
+static CRGB color = CRGB::Red;
+static int red = 255;
+static int green = 0;
+static int blue = 0;
 static int brightness = 1;
 static bool alarmActive = false;
 
@@ -48,6 +53,7 @@ void setup()
 
   DisplayInit();
   DisplaySetBrightness(brightness);
+  DisplaySetColor(color);
   DisplaySetAlarmActive(alarmActive);
 
   // Connect to Wi-Fi
@@ -76,10 +82,11 @@ void setup()
 
 void ReadLdr()
 {
+  char buf[16];
   int val;
+
   if (LdrRead(&val)) {
     mqttClient.beginMessage("tele/wekker/sensor");
-    char buf[16];
     buf[snprintf(buf, sizeof(buf) - 1, "%d", val)] = '\0';
     mqttClient.print(buf);
     mqttClient.endMessage();
@@ -95,7 +102,27 @@ void ReadLdr()
     }
     Serial.printf("LDR brightness = %d\n", brightness);
     DisplaySetBrightness(brightness);
+
+    int notRed = (val * 250) / 3000;
+    if (notRed > 250) {
+      notRed = 250;
+    }
+    color = CRGB(255, notRed, notRed);
+    DisplaySetColor(color);
+
+    mqttClient.beginMessage("tele/wekker/brightness");
+
+    buf[snprintf(buf, sizeof(buf) - 1, "%d", brightness)] = '\0';
+    mqttClient.print(buf);
+    mqttClient.endMessage();
   }  
+}
+
+static void NewColor()
+{
+  Serial.printf("R=%d, G=%d, B=%d\n", red, green, blue);
+  color = CRGB(red, green, blue);
+  DisplaySetColor(color);
 }
 
 void loop() 
@@ -124,6 +151,13 @@ void loop()
       }
       Serial.printf("Brightness = %d\n", brightness);
     }
+    if (c == 'r') { if (red   < 255) { red++;   NewColor(); }}
+    if (c == 'R') { if (red   > 0)   { red--;   NewColor(); }}
+    if (c == 'g') { if (green < 255) { green++; NewColor(); }}
+    if (c == 'G') { if (green > 0)   { green--; NewColor(); }}
+    if (c == 'b') { if (blue  < 255) { blue++;  NewColor(); }}
+    if (c == 'B') { if (blue  > 0)   { blue--;  NewColor(); }}
+
     if (c == 'a') {
       alarmBuzzer.trigger();
     }
@@ -133,6 +167,7 @@ void loop()
     Serial.println("Failed to obtain time");
     return;
   }
+
   if (dispTime != ((timeinfo.tm_hour * 100) + timeinfo.tm_min)) {
     dispTime = (timeinfo.tm_hour * 100) + timeinfo.tm_min;
     if (alarmActive && (dispTime == 600)) {

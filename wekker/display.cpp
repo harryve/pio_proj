@@ -2,8 +2,11 @@
 #include "hwdefs.h"
 #include "display.h"
 
+static CRGB ledColor;
 static CRGB leds[NUM_LEDS];
 static bool alarmActive;
+static int hours;
+static int minutes;
 
 // 5x8 (from HelvetiPixel.ttf) font for digits
 static const uint8_t digits[10][8] = {
@@ -41,6 +44,11 @@ void DisplayInit()
   //FastLED.setBrightness(brightness);
 }
 
+void DisplaySetColor(CRGB color)
+{
+  ledColor = color;
+}
+
 void DisplaySetBrightness(int brightness)
 {
   FastLED.setBrightness(brightness);
@@ -52,7 +60,6 @@ void DisplaySetAlarmActive(bool active)
   alarmActive = active;
   if (alarmActive) {
     setLED(0, 0, CRGB::Red);
-    Serial.println("Ledje aan");
   }
   else {
     setLED(0, 0, CRGB::Black);
@@ -60,24 +67,46 @@ void DisplaySetAlarmActive(bool active)
   FastLED.show();
 }
 
-void DisplayDrawTime(int hours, int minutes) 
+void DisplayDrawTime(int h, int m) 
 {
-  CRGB color = CRGB::Red;
-  FastLED.clear();
+  hours = h;
+  minutes = m;
+  DisplayRedrawTime(); 
+}
 
-  if (alarmActive) {
-    setLED(0, 0, color);
+void DisplayRedrawTime(bool invert) 
+{
+  CRGB c;
+
+  if (invert) {
+    for (int i = 0; i < NUM_LEDS; i++) {
+      leds[i] = ledColor;
+    }
+  }
+  else {
+    FastLED.clear();
   }
 
+  if (alarmActive) {
+    c = invert ? CRGB::Black : CRGB::Red; 
+    setLED(0, 0, c);
+  }
+
+  if (invert) {
+    c = CRGB::Black;
+  }
+  else {
+    c = ledColor;
+  }
   // 5 1 5 3 5 1 5
   // 0   6   14  20
   int x = 3;
-  drawDigit(x + 0, 0, hours / 10, color);
-  drawDigit(x + 6, 0, hours % 10, color);
-  setLED(x + 12, 2, color);
-  setLED(x + 12, 5, color);
-  drawDigit(x + 14, 0, minutes / 10, color);
-  drawDigit(x + 20, 0, minutes % 10, color);
+  drawDigit(x + 0, 0, hours / 10, c);
+  drawDigit(x + 6, 0, hours % 10, c);
+  setLED(x + 12, 2, c);
+  setLED(x + 12, 5, c);
+  drawDigit(x + 14, 0, minutes / 10, c);
+  drawDigit(x + 20, 0, minutes % 10, c);
 
   FastLED.show();
 }

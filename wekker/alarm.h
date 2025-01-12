@@ -4,6 +4,7 @@ class Alarm {
     unsigned int startTime;
     int state;
     int count;
+    int tones;
 
   public:
     Alarm(int pin);
