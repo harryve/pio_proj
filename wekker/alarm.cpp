@@ -36,7 +36,7 @@ void Alarm::tick()
       count = ALARM_COUNT;
       tones = BEEP_COUNT - 1;
       startTime = millis();
-      //tone(buzzerPin, FREQUENCY);
+      tone(buzzerPin, FREQUENCY);
       Serial.println("BEEP 1st");
       DisplayRedrawTime(true);
       state = ON;
@@ -62,7 +62,7 @@ void Alarm::tick()
         return;
       }
       if (tones > 0) {
-        //tone(buzzerPin, FREQUENCY);
+        tone(buzzerPin, FREQUENCY);
         tones--;
         Serial.println("BEEP");
       }
@@ -72,7 +72,7 @@ void Alarm::tick()
       break;
 
     default:
-      //noTone(buzzerPin);
+      noTone(buzzerPin);
       break;
   }
 }

@@ -1,5 +1,6 @@
 #include <FastLED.h>
 #include "hwdefs.h"
+#include "network.h"
 #include "display.h"
 
 static CRGB ledColor;
@@ -52,7 +53,6 @@ void DisplaySetColor(CRGB color)
 void DisplaySetBrightness(int brightness)
 {
   FastLED.setBrightness(brightness);
-  FastLED.show();
 }
 
 void DisplaySetAlarmActive(bool active)
@@ -108,6 +108,12 @@ void DisplayRedrawTime(bool invert)
   drawDigit(x + 14, 0, minutes / 10, c);
   drawDigit(x + 20, 0, minutes % 10, c);
 
+  int netwerkErrors = NetworkGetErrors();
+  c = invert ? CRGB::Black : CRGB::Red; 
+  for (int i = 0; i < 8; i++) {
+    if (netwerkErrors & (1 << i)) {
+      setLED(31, i, c);
+    }
+  }
   FastLED.show();
 }
-

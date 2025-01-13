@@ -1,22 +1,22 @@
 //#include <Arduino.h>
 #include <FastLED.h>
-#include <ArduinoMqttClient.h>
-#include <WiFi.h>
-#include <Wire.h>
+//#include <ArduinoMqttClient.h>
+//#include <WiFi.h>
+//#include <Wire.h>
 
-#include <time.h>
+//#include <time.h>
 #include "hwdefs.h"
 #include "display.h"
 #include "alarm.h"
 #include "button.h"
 #include "ldr.h"
-#include "cred.h"
+#include "network.h"
 
-WiFiClient wifiClient;
-MqttClient mqttClient(wifiClient);
+//WiFiClient wifiClient;
+//MqttClient mqttClient(wifiClient);
 
-const char* ssid = SSID;
-const char* password = PASSWORD;
+//const char* ssid = SSID;
+//const char* password = PASSWORD;
 const char* ntpServer = "ntp.harry.thuis";
 const long  gmtOffset_sec = 3600;
 const int   daylightOffset_sec = 3600;
@@ -56,40 +56,19 @@ void setup()
   DisplaySetColor(color);
   DisplaySetAlarmActive(alarmActive);
 
-  // Connect to Wi-Fi
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-  Serial.println("\nConnected to WiFi");
-
-  mqttClient.setId("wekker");
-  Serial.print("Attempting to connect to the MQTT broker: ");
-  if (!mqttClient.connect("mqtt.harry.thuis", 1883)) {
-    Serial.print("MQTT connection failed! Error code = ");
-    Serial.println(mqttClient.connectError());
-  }
-  else {
-    Serial.println("Connected to the MQTT broker!");
-    Serial.println();
-  }
+  NetworkInit();
 
   // Init and get the time
-  configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
+  configTime(gmtOffset_sec, daylightOffset_sec, "pool.ntp.org");//ntpServer);
 }
 
 
 void ReadLdr()
 {
-  char buf[16];
   int val;
 
   if (LdrRead(&val)) {
-    mqttClient.beginMessage("tele/wekker/sensor");
-    buf[snprintf(buf, sizeof(buf) - 1, "%d", val)] = '\0';
-    mqttClient.print(buf);
-    mqttClient.endMessage();
+    NetworkPublishLdr(val);
 
     Serial.printf("LDR = %d\n", val);
 
@@ -110,11 +89,9 @@ void ReadLdr()
     color = CRGB(255, notRed, notRed);
     DisplaySetColor(color);
 
-    mqttClient.beginMessage("tele/wekker/brightness");
+    DisplayRedrawTime();
 
-    buf[snprintf(buf, sizeof(buf) - 1, "%d", brightness)] = '\0';
-    mqttClient.print(buf);
-    mqttClient.endMessage();
+    NetworkPublishBrightness(brightness);
   }  
 }
 
@@ -130,6 +107,7 @@ void loop()
   static int dispTime = -1;
   struct tm timeinfo;
 
+  NetworkTick();
   alarmBuzzer.tick();
   button2.Tick();
   ReadLdr();
@@ -141,6 +119,7 @@ void loop()
       if (brightness < 100) {
         brightness++;
         DisplaySetBrightness(brightness);
+        DisplayRedrawTime();
       }
       Serial.printf("Brightness = %d %d\n", brightness, digitalRead(BUTTON_SELECT_PIN));
     }
@@ -148,6 +127,7 @@ void loop()
       if (brightness > 0) {
         brightness--;
         DisplaySetBrightness(brightness);
+        DisplayRedrawTime();
       }
       Serial.printf("Brightness = %d\n", brightness);
     }
@@ -165,6 +145,7 @@ void loop()
 
   if (!getLocalTime(&timeinfo)){
     Serial.println("Failed to obtain time");
+    DisplayDrawTime(0, 0);
     return;
   }
 
