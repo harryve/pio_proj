@@ -101,7 +101,9 @@ void DisplayRedrawTime(bool invert)
   // 5 1 5 3 5 1 5
   // 0   6   14  20
   int x = 3;
-  drawDigit(x + 0, 0, hours / 10, c);
+  if (hours / 10 != 0) {
+    drawDigit(x + 0, 0, hours / 10, c);
+  }
   drawDigit(x + 6, 0, hours % 10, c);
   setLED(x + 12, 2, c);
   setLED(x + 12, 5, c);
