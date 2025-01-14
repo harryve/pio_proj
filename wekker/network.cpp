@@ -97,6 +97,12 @@ int NetworkGetErrors()
   unsigned int reachability = esp_sntp_getreachability(0);
   Serial.printf("Reachability = %x\n", reachability);
 
+  if ((reachability & 0xf) == 0) {
+    networkErrors |= NWK_NO_NTP;
+  }
+  else {
+    networkErrors &= ~NWK_NO_NTP;
+  }
 //typedef enum {
 //    SNTP_SYNC_STATUS_RESET,         // Reset status.
 //    SNTP_SYNC_STATUS_COMPLETED,     // Time is synchronized.
@@ -105,12 +111,12 @@ int NetworkGetErrors()
 
   int status = esp_sntp_get_sync_status();
   Serial.printf("Status = %x\n", status);
-  if (status != SNTP_SYNC_STATUS_COMPLETED) {
-    networkErrors |= NWK_NO_NTP;
-  }
-  else {
-    networkErrors &= ~NWK_NO_NTP;
-  }
+//  if (status != SNTP_SYNC_STATUS_COMPLETED) {
+//    networkErrors |= NWK_NO_NTP;
+//  }
+//  else {
+//    networkErrors &= ~NWK_NO_NTP;
+//  }
 
   return networkErrors;
 }

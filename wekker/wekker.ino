@@ -12,11 +12,6 @@
 #include "ldr.h"
 #include "network.h"
 
-//WiFiClient wifiClient;
-//MqttClient mqttClient(wifiClient);
-
-//const char* ssid = SSID;
-//const char* password = PASSWORD;
 const char* ntpServer = "ntp.harry.thuis";
 const long  gmtOffset_sec = 3600;
 const int   daylightOffset_sec = 3600;
