@@ -1,3 +1,5 @@
+#pragma once
+
 #define BUZZER_PIN 15
 #define RESET_PIN 13
 

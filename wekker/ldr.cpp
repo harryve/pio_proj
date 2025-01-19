@@ -12,7 +12,7 @@ bool LdrRead(int *pVal)
   static unsigned long prevMillis = 0;
 
   unsigned long currentMillis = millis();
-  if (currentMillis - prevMillis > 60000) {
+  if (currentMillis - prevMillis > 1000) {
     prevMillis = currentMillis;
 
     uint16_t val = analogRead(LDR_PIN);

@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include <FastLED.h>
-#include "display.h"
+//#include "display.h"
 #include "alarm.h"
 
 #define IDLE  0
@@ -26,28 +26,34 @@ void Alarm::trigger()
   state = START;
 }
 
-void Alarm::tick()
+bool Alarm::tick(bool &invert)
 {
+  bool redraw = false;
+
   switch (state) {
     case IDLE:
-      return;
+      break;
 
     case START:
       count = ALARM_COUNT;
       tones = BEEP_COUNT - 1;
       startTime = millis();
-      tone(buzzerPin, FREQUENCY);
+      //tone(buzzerPin, FREQUENCY);
       Serial.println("BEEP 1st");
-      DisplayRedrawTime(true);
+      redraw = true;
+      invert = true;
+      //DisplayRedrawTime(true);
       state = ON;
       break;
 
     case ON:
       if (millis() - startTime < DUTY_TIME) {
-        return;
+        break;
       }
-      noTone(buzzerPin);
-      DisplayRedrawTime(false);
+      //noTone(buzzerPin);
+      //DisplayRedrawTime(false);
+      redraw = true;
+      invert = false;
       if (--count > 0) {
         state = OFF;
         startTime = millis();
@@ -59,20 +65,23 @@ void Alarm::tick()
 
     case OFF:
       if (millis() - startTime < DUTY_TIME) {
-        return;
+        break;
       }
       if (tones > 0) {
-        tone(buzzerPin, FREQUENCY);
+        //tone(buzzerPin, FREQUENCY);
         tones--;
         Serial.println("BEEP");
       }
-      DisplayRedrawTime(true);
+      redraw = true;
+      invert = true;
+      //DisplayRedrawTime(true);
       state = ON;
       startTime = millis();
       break;
 
     default:
-      noTone(buzzerPin);
+      //noTone(buzzerPin);
       break;
   }
+  return redraw;
 }

@@ -1,20 +1,27 @@
-#ifndef button_h
-#define button_h
+#pragma once
 
 class Button {
 public:
 
   enum class Event {
     SHORT_PRESS,
-    LONG_PRESS
+    LONG_PRESS,
+    LONG_PRESS_END
   };
 
-  using EventCb = void (*)(Button::Event event);
+  enum class Id {
+    LEFT,
+    MID,
+    RIGHT
+  };
 
-  Button(int buttonPin, Button::EventCb eventCb);
+  using EventCb = void (*)(Id id, Event event);
+
+  Button(int buttonPin, Id id, EventCb eventCb);
   void Tick(void);
 
 private:
+  Id  id;
   int pin;
   int lastState;
   int buttonState;
@@ -22,6 +29,6 @@ private:
   unsigned long lastEdgeAt;
   bool longPress;
   EventCb eventCb;
-};
 
-#endif // button_h
+  void HandleEvent(Event event);
+};

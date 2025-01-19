@@ -1,13 +1,8 @@
-#include <FastLED.h>
-#include "hwdefs.h"
-#include "network.h"
+#include <Arduino.h>
 #include "display.h"
+#include "hwdefs.h"
 
-static CRGB ledColor;
 static CRGB leds[NUM_LEDS];
-static bool alarmActive;
-static int hours;
-static int minutes;
 
 // 5x8 (from HelvetiPixel.ttf) font for digits
 static const uint8_t digits[10][8] = {
@@ -23,99 +18,51 @@ static const uint8_t digits[10][8] = {
   {0b01110, 0b10001, 0b10001, 0b10001, 0b01111, 0b00001, 0b00001, 0b01110}  // 9
 };
 
-static void setLED(int x, int y, CRGB color) {
-  if (x < 0 || x >= MATRIX_WIDTH || y < 0 || y >= MATRIX_HEIGHT) return;
+Display::Display()
+{
+}
+
+void Display::InitLeds()
+{
+  FastLED.addLeds<WS2812B, DATA_PIN, GRB>(leds, NUM_LEDS);
+  FastLED.setBrightness(50);
+  fill_rainbow( leds, NUM_LEDS, 0, 7);
+  FastLED.show();  
+}
+
+//void Display::Tick() // Implemented in derived classes
+//{
+//  Serial.print(".");
+//}
+
+void Display::SetBrightness(int b)
+{
+  brightness = b;
+}
+
+void Display::Fill(CRGB color)
+{
+  for (int i = 0; i < NUM_LEDS; i++) {
+    leds[i] = color;
+  }
+}
+
+void Display::SetLed(int x, int y, CRGB color) 
+{
+  if (x < 0 || x >= MATRIX_WIDTH || y < 0 || y >= MATRIX_HEIGHT) {
+    return;
+  }
   int index = (y % 2 == 0) ? y * MATRIX_WIDTH + x : (y + 1) * MATRIX_WIDTH - 1 - x;
   leds[index] = color;
 }
 
-static void drawDigit(int x, int y, int digit, CRGB color) {
+void Display::DrawDigit(int x, int y, int digit, CRGB color) 
+{
   for (int row = 0; row < 8; row++) {
     for (int col = 0; col < 5; col++) {
       if (digits[digit][row] & (1 << (4 - col))) {
-        setLED(x + col, y + row, color);
+        SetLed(x + col, y + row, color);
       }
     }
   }
-}
-
-void DisplayInit()
-{
-  FastLED.addLeds<WS2812B, DATA_PIN, GRB>(leds, NUM_LEDS);
-  //FastLED.setBrightness(brightness);
-}
-
-void DisplaySetColor(CRGB color)
-{
-  ledColor = color;
-}
-
-void DisplaySetBrightness(int brightness)
-{
-  FastLED.setBrightness(brightness);
-}
-
-void DisplaySetAlarmActive(bool active)
-{
-  alarmActive = active;
-  if (alarmActive) {
-    setLED(0, 0, CRGB::Red);
-  }
-  else {
-    setLED(0, 0, CRGB::Black);
-  }
-  FastLED.show();
-}
-
-void DisplayDrawTime(int h, int m) 
-{
-  hours = h;
-  minutes = m;
-  DisplayRedrawTime(); 
-}
-
-void DisplayRedrawTime(bool invert) 
-{
-  CRGB c;
-
-  if (invert) {
-    for (int i = 0; i < NUM_LEDS; i++) {
-      leds[i] = ledColor;
-    }
-  }
-  else {
-    FastLED.clear();
-  }
-
-  if (alarmActive) {
-    c = invert ? CRGB::Black : CRGB::Red; 
-    setLED(0, 0, c);
-  }
-
-  if (invert) {
-    c = CRGB::Black;
-  }
-  else {
-    c = ledColor;
-  }
-  // 5 1 5 3 5 1 5
-  // 0   6   14  20
-  int x = 3;
-  if (hours / 10 != 0) {
-    drawDigit(x + 0, 0, hours / 10, c);
-  }
-  drawDigit(x + 6, 0, hours % 10, c);
-  setLED(x + 12, 2, c);
-  setLED(x + 12, 5, c);
-  drawDigit(x + 14, 0, minutes / 10, c);
-  drawDigit(x + 20, 0, minutes % 10, c);
-
-  int netwerkErrors = NetworkGetErrors();
-  c = invert ? CRGB::Black : CRGB::Red; 
-  for (int i = 0; i < 8; i++) {
-    if (netwerkErrors & (1 << i)) {
-      setLED(31, i, c);
-    }
-  }
-  FastLED.show();
 }

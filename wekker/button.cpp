@@ -2,15 +2,16 @@
 #include "button.h"
 
 
-#define DEBOUNCE_DELAY	         100
+#define DEBOUNCE_DELAY	     100
 #define	LONG_PRESSED_DELAY	1000
 
 #define PRESSED     LOW
 #define RELEASED    HIGH
 
-Button::Button(int buttonPin, Button::EventCb cb)
+Button::Button(int buttonPin, Id id, EventCb cb)
 {
-  pin = buttonPin;
+  this->pin = buttonPin;
+  this->id = id;
 
   pinMode(pin, INPUT_PULLUP);
 
@@ -32,33 +33,40 @@ void Button::Tick(void)
     return;
   }
 
-  if ((curTime - lastEdgeAt) > DEBOUNCE_DELAY) {
-    if (reading != buttonState) { // Button state changed
-      buttonState = reading;
-      if (buttonState == PRESSED) {
-        pressedAt = curTime;
-      }
+  if ((curTime - lastEdgeAt) < DEBOUNCE_DELAY) {
+    return;
+  }
+  if (reading != buttonState) { // Button state changed
+    buttonState = reading;
+    if (buttonState == PRESSED) {
+      pressedAt = curTime;
+    }
 
-      if (buttonState == RELEASED) {     // Button released
+    if (buttonState == RELEASED) {     // Button released
+      if (!longPress) {
+        HandleEvent(Event::SHORT_PRESS);
+      }
+      else {
+        HandleEvent(Event::LONG_PRESS_END);
+      }
+      longPress = false;
+    }
+  }
+  else {                        // Button not changed
+    if (buttonState == PRESSED) {
+      if ((curTime - pressedAt) >= LONG_PRESSED_DELAY) {
         if (!longPress) {
-          if (eventCb != NULL) {
-              eventCb(Event::SHORT_PRESS);
-          }
-        }
-        longPress = false;
-      }
-    }
-    else {                        // Button still pressed
-      if (buttonState == PRESSED) {
-        if ((curTime - pressedAt) >= LONG_PRESSED_DELAY) {
-          if (!longPress) {
-            longPress = true;
-            if (eventCb != NULL) {
-              eventCb(Event::LONG_PRESS);
-            }
-          }
+          longPress = true;
+          HandleEvent(Event::LONG_PRESS);
         }
       }
     }
+  }
+}
+
+void Button::HandleEvent(Event event)
+{
+  if (eventCb != NULL) {
+    eventCb(id, event);
   }
 }

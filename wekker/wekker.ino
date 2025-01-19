@@ -1,10 +1,7 @@
 //#include <Arduino.h>
-#include <FastLED.h>
-//#include <ArduinoMqttClient.h>
-//#include <WiFi.h>
-//#include <Wire.h>
 
-//#include <time.h>
+#include "alarmclock.h"
+#include "setalarmts.h"
 #include "hwdefs.h"
 #include "display.h"
 #include "alarm.h"
@@ -13,6 +10,7 @@
 #include "network.h"
 
 const char* ntpServer = "ntp.harry.thuis";
+//const char* ntpServer = "pool.ntp.org";
 const long  gmtOffset_sec = 3600;
 const int   daylightOffset_sec = 3600;
 
@@ -21,51 +19,58 @@ static int red = 255;
 static int green = 0;
 static int blue = 0;
 static int brightness = 1;
-static bool alarmActive = false;
 
+AlarmClock alarmClock = AlarmClock();
+SetAlarmTs setAlarmTs = SetAlarmTs();
+Display *handlers[] = {&alarmClock, &setAlarmTs};
+int mode = 0;
 
 Alarm alarmBuzzer = Alarm(BUZZER_PIN);
 
-void button2_event(Button::Event event)
+void ButtonHandler(Button::Id id, Button::Event event)
 {
-  using enum Button::Event;
-  if (event == SHORT_PRESS) {
-    alarmActive = alarmActive ? false : true;
-    DisplaySetAlarmActive(alarmActive);
-    Serial.println("SP");
+  switch (event) {
+    case Button::Event::SHORT_PRESS:    Serial.printf("%d: SP\n", (int)id); break;
+    case Button::Event::LONG_PRESS:     Serial.printf("%d: LP\n", (int)id); break;
+    case Button::Event::LONG_PRESS_END: Serial.printf("%d: LE\n", (int)id); break;
+    default: Serial.printf("%d: ???\n", (int)id); break;
   }
-  else {
-    Serial.println("LP");
-  }
+  handlers[mode]->ButtonHandler(id, event);
 }
 
-Button button2 = Button(BUTTON_SELECT_PIN, button2_event);
+Button button1 = Button(BUTTON_DOWN_PIN, Button::Id::LEFT, ButtonHandler);
+Button button2 = Button(BUTTON_SELECT_PIN, Button::Id::MID, ButtonHandler);
+Button button3 = Button(BUTTON_UP_PIN, Button::Id::RIGHT, ButtonHandler);
 
 void setup() 
 {
   Serial.begin(115200);
+
   LdrInit();
 
-  DisplayInit();
-  DisplaySetBrightness(brightness);
-  DisplaySetColor(color);
-  DisplaySetAlarmActive(alarmActive);
+  alarmClock.init(brightness, color);
 
   NetworkInit();
 
   // Init and get the time
-  configTime(gmtOffset_sec, daylightOffset_sec, "pool.ntp.org");//ntpServer);
+  configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
+
+  // Wait for time sync
+  struct tm timeinfo;
+  if (!getLocalTime(&timeinfo)) {
+    delay(100);
+  }
 }
 
 
 void ReadLdr()
 {
+  static int count = 0;
   int val;
 
   if (LdrRead(&val)) {
-    NetworkPublishLdr(val);
 
-    Serial.printf("LDR = %d\n", val);
+    //Serial.printf("LDR = %d\n", val);
 
     brightness = val / 50;
     if (brightness > 35) {
@@ -74,19 +79,21 @@ void ReadLdr()
     if (brightness < 1) {
       brightness = 1;
     }
-    Serial.printf("LDR brightness = %d\n", brightness);
-    DisplaySetBrightness(brightness);
+    //Serial.printf("LDR brightness = %d\n", brightness);
+    alarmClock.SetBrightness(brightness);
 
     int notRed = (val * 250) / 3000;
     if (notRed > 250) {
       notRed = 250;
     }
     color = CRGB(255, notRed, notRed);
-    DisplaySetColor(color);
+    alarmClock.SetColor(color);
 
-    DisplayRedrawTime();
-
-    NetworkPublishBrightness(brightness);
+    if (count++ >= 60) {
+      count = 0;
+      NetworkPublishLdr(val);
+      NetworkPublishBrightness(brightness);
+    }
   }  
 }
 
@@ -94,35 +101,27 @@ static void NewColor()
 {
   Serial.printf("R=%d, G=%d, B=%d\n", red, green, blue);
   color = CRGB(red, green, blue);
-  DisplaySetColor(color);
+  alarmClock.SetColor(color);
 }
 
-void loop() 
+static void Monitor()
 {
-  static int dispTime = -1;
-  struct tm timeinfo;
-
-  NetworkTick();
-  alarmBuzzer.tick();
-  button2.Tick();
-  ReadLdr();
-
   char c = Serial.read();
-  if (c != 0xff) {
-    Serial.printf("Received [%c]\n", c);
+  if (c > 0x20 && c < 0x80) {
+    //Serial.printf("Received [%c]\n", c);
     if (c == 'u') {
       if (brightness < 100) {
         brightness++;
-        DisplaySetBrightness(brightness);
-        DisplayRedrawTime();
+        alarmClock.SetBrightness(brightness);
+        //DisplayRedrawTime();
       }
       Serial.printf("Brightness = %d %d\n", brightness, digitalRead(BUTTON_SELECT_PIN));
     }
     if (c == 'd') {
       if (brightness > 0) {
         brightness--;
-        DisplaySetBrightness(brightness);
-        DisplayRedrawTime();
+        alarmClock.SetBrightness(brightness);
+        //DisplayRedrawTime();
       }
       Serial.printf("Brightness = %d\n", brightness);
     }
@@ -137,20 +136,37 @@ void loop()
       alarmBuzzer.trigger();
     }
   }
+}
 
-  if (!getLocalTime(&timeinfo)){
-    Serial.println("Failed to obtain time");
-    DisplayDrawTime(0, 0);
-    return;
+void loop() 
+{
+  static int dispTime = -1;
+  struct tm timeinfo;
+  bool invert;
+
+  NetworkTick();
+  if (alarmBuzzer.tick(invert)) {
+    alarmClock.Invert(invert);
   }
+  button2.Tick();
+  ReadLdr();
 
-  if (dispTime != ((timeinfo.tm_hour * 100) + timeinfo.tm_min)) {
-    dispTime = (timeinfo.tm_hour * 100) + timeinfo.tm_min;
-    if (alarmActive && (dispTime == 600)) {
-      alarmBuzzer.trigger();
+  if (getLocalTime(&timeinfo)) {
+    //if (dispTime != timeinfo.tm_sec) { //((timeinfo.tm_hour * 100) + timeinfo.tm_min)) {
+    //  dispTime = timeinfo.tm_sec; //(timeinfo.tm_hour * 100) + timeinfo.tm_min;
+    if (dispTime != ((timeinfo.tm_hour * 100) + timeinfo.tm_min)) {
+      dispTime = (timeinfo.tm_hour * 100) + timeinfo.tm_min;
+
+      if ((dispTime == 600) && alarmClock.AlarmActive()) {
+        alarmBuzzer.trigger();
+      }
+      Serial.printf("Time = %d\n", dispTime);
+      alarmClock.SetTime(timeinfo.tm_hour, timeinfo.tm_min);
     }
-    Serial.printf("Time = %d\n", dispTime);
-    DisplayDrawTime(timeinfo.tm_hour, timeinfo.tm_min);
   }
-  //delay(100);
+
+  //alarmClock.Tick();
+  handlers[mode]->Tick();
+  Monitor();
+
 }

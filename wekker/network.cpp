@@ -84,7 +84,7 @@ void NetworkTick()
 int NetworkGetErrors()
 {
   unsigned long interval = esp_sntp_get_sync_interval();
-  Serial.printf("Interval = %d\n", interval);
+  //Serial.printf("Interval = %d\n", interval);
   if (interval > 3600*1000) {
       esp_sntp_set_sync_interval(3600*1000);
       if (!esp_sntp_restart()) {
@@ -95,7 +95,7 @@ int NetworkGetErrors()
       }
   }
   unsigned int reachability = esp_sntp_getreachability(0);
-  Serial.printf("Reachability = %x\n", reachability);
+  //Serial.printf("Reachability = %x\n", reachability);
 
   if ((reachability & 0xf) == 0) {
     networkErrors |= NWK_NO_NTP;
@@ -109,8 +109,8 @@ int NetworkGetErrors()
 //    SNTP_SYNC_STATUS_IN_PROGRESS,   // Smooth time sync in progress.
 //} sntp_sync_status_t;
 
-  int status = esp_sntp_get_sync_status();
-  Serial.printf("Status = %x\n", status);
+  //int status = esp_sntp_get_sync_status();
+  //Serial.printf("Status = %x\n", status);
 //  if (status != SNTP_SYNC_STATUS_COMPLETED) {
 //    networkErrors |= NWK_NO_NTP;
 //  }

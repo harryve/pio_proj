@@ -1,3 +1,5 @@
+#pragma once
+
 class Alarm {
   private:
     int buzzerPin;
@@ -9,5 +11,5 @@ class Alarm {
   public:
     Alarm(int pin);
     void trigger();
-    void tick();
+    bool tick(bool &invert);
 };

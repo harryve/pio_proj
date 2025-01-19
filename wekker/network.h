@@ -1,3 +1,5 @@
+#pragma once
+
 void NetworkInit();
 void NetworkTick();
 int NetworkGetStatus();
