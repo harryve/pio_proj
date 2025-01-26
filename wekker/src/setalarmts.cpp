@@ -17,9 +17,10 @@ void SetAlarmTs::Tick()
     return;
   }
   drawRequest = false;
+  FastLED.clear();
 
   int x = 3;
-  CRGB c = CRGB::Green; 
+  CRGB c = CRGB::Green;
 
   if (hours / 10 != 0) {
     DrawDigit(x + 0, 0, hours / 10, c);
@@ -35,7 +36,7 @@ void SetAlarmTs::Tick()
 
 void SetAlarmTs::ButtonHandler(Button::Id id, Button::Event event)
 {
-  
+
 }
 
 void SetAlarmTs::SetWakeupTime(int h, int m)

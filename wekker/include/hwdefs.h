@@ -5,8 +5,8 @@
 
 #define BATTERY_PIN 34
 #define LDR_PIN 35
-#define BUTTON_UP_PIN 26
-#define BUTTON_DOWN_PIN 14
+#define BUTTON_LEFT_PIN 26
+#define BUTTON_RIGHT_PIN 14
 #define BUTTON_SELECT_PIN 27
 #define I2C_SCL_PIN 22
 #define I2C_SDA_PIN 21

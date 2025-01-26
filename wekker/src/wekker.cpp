@@ -1,4 +1,4 @@
-//#include <Arduino.h>
+#include <Arduino.h>
 
 #include "alarmclock.h"
 #include "setalarmts.h"
@@ -8,6 +8,7 @@
 #include "button.h"
 #include "ldr.h"
 #include "network.h"
+#include "webserver.h"
 
 const char* ntpServer = "ntp.harry.thuis";
 //const char* ntpServer = "pool.ntp.org";
@@ -35,14 +36,21 @@ void ButtonHandler(Button::Id id, Button::Event event)
     case Button::Event::LONG_PRESS_END: Serial.printf("%d: LE\n", (int)id); break;
     default: Serial.printf("%d: ???\n", (int)id); break;
   }
-  handlers[mode]->ButtonHandler(id, event);
+
+  if (event == Button::Event::SHORT_PRESS && id == Button::Id::LEFT) {
+    mode = 1 - mode;
+    handlers[mode]->Redraw();
+  }
+  else {
+    handlers[mode]->ButtonHandler(id, event);
+  }
 }
 
-Button button1 = Button(BUTTON_DOWN_PIN, Button::Id::LEFT, ButtonHandler);
+Button button1 = Button(BUTTON_LEFT_PIN, Button::Id::LEFT, ButtonHandler);
 Button button2 = Button(BUTTON_SELECT_PIN, Button::Id::MID, ButtonHandler);
-Button button3 = Button(BUTTON_UP_PIN, Button::Id::RIGHT, ButtonHandler);
+Button button3 = Button(BUTTON_RIGHT_PIN, Button::Id::RIGHT, ButtonHandler);
 
-void setup() 
+void setup()
 {
   Serial.begin(115200);
 
@@ -51,6 +59,7 @@ void setup()
   alarmClock.init(brightness, color);
 
   NetworkInit();
+  WebserverInit();
 
   // Init and get the time
   configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
@@ -62,13 +71,14 @@ void setup()
   }
 }
 
-
+#define PUBLISH_TIME 60000   // ms
+#define SAMPLE_TIME  1000    // ms
 void ReadLdr()
 {
   static int count = 0;
   int val;
 
-  if (LdrRead(&val)) {
+  if (LdrRead(&val, SAMPLE_TIME)) {
 
     //Serial.printf("LDR = %d\n", val);
 
@@ -79,8 +89,8 @@ void ReadLdr()
     if (brightness < 1) {
       brightness = 1;
     }
-    //Serial.printf("LDR brightness = %d\n", brightness);
-    alarmClock.SetBrightness(brightness);
+    Serial.printf("LDR brightness = %d\n", brightness);
+    handlers[mode]->SetBrightness(brightness);
 
     int notRed = (val * 250) / 3000;
     if (notRed > 250) {
@@ -89,12 +99,12 @@ void ReadLdr()
     color = CRGB(255, notRed, notRed);
     alarmClock.SetColor(color);
 
-    if (count++ >= 60) {
+    if (count++ >= PUBLISH_TIME / SAMPLE_TIME) {
       count = 0;
       NetworkPublishLdr(val);
       NetworkPublishBrightness(brightness);
     }
-  }  
+  }
 }
 
 static void NewColor()
@@ -138,17 +148,21 @@ static void Monitor()
   }
 }
 
-void loop() 
+void loop()
 {
   static int dispTime = -1;
   struct tm timeinfo;
   bool invert;
 
   NetworkTick();
+  WebserverTick();
+
   if (alarmBuzzer.tick(invert)) {
     alarmClock.Invert(invert);
   }
+  button1.Tick();
   button2.Tick();
+  button3.Tick();
   ReadLdr();
 
   if (getLocalTime(&timeinfo)) {

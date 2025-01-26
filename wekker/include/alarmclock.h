@@ -15,7 +15,6 @@ public:
   void SetTime(int hours, int minutes);
 
 private:
-  bool drawRequest;
   bool invert;
   bool alarmActive;
   int hours;

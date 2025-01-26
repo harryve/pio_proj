@@ -10,7 +10,6 @@ public:
   void SetWakeupTime(int hours, int minutes);
 
 private:
-  bool drawRequest;
   int hours;
   int minutes;
 };

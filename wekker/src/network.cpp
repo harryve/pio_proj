@@ -19,6 +19,7 @@ void NetworkInit()
   networkErrors = 0;
 
   // Connect to Wi-Fi
+  WiFi.setHostname("wekker");
   WiFi.begin(SSID, PASSWORD);
   while (timo-- > 0 && WiFi.status() != WL_CONNECTED) {
     delay(500);
@@ -83,18 +84,18 @@ void NetworkTick()
 
 int NetworkGetErrors()
 {
-  unsigned long interval = esp_sntp_get_sync_interval();
+  unsigned long interval = sntp_get_sync_interval();
   //Serial.printf("Interval = %d\n", interval);
   if (interval > 3600*1000) {
-      esp_sntp_set_sync_interval(3600*1000);
-      if (!esp_sntp_restart()) {
+      sntp_set_sync_interval(3600*1000);
+      if (!sntp_restart()) {
         Serial.println("SNTP restart failed");
       }
       else {
         Serial.println("SNTP restarted");
       }
   }
-  unsigned int reachability = esp_sntp_getreachability(0);
+  unsigned int reachability = sntp_getreachability(0);
   //Serial.printf("Reachability = %x\n", reachability);
 
   if ((reachability & 0xf) == 0) {

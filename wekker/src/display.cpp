@@ -26,8 +26,8 @@ void Display::InitLeds()
 {
   FastLED.addLeds<WS2812B, DATA_PIN, GRB>(leds, NUM_LEDS);
   FastLED.setBrightness(50);
-  fill_rainbow( leds, NUM_LEDS, 0, 7);
-  FastLED.show();  
+  fill_rainbow(leds, NUM_LEDS, 0, 7);
+  FastLED.show();
 }
 
 //void Display::Tick() // Implemented in derived classes
@@ -35,9 +35,15 @@ void Display::InitLeds()
 //  Serial.print(".");
 //}
 
+void Display::Redraw()
+{
+    drawRequest = true;
+}
+
 void Display::SetBrightness(int brightness)
 {
     FastLED.setBrightness(brightness);
+    Redraw();
 }
 
 void Display::Fill(CRGB color)
@@ -47,7 +53,7 @@ void Display::Fill(CRGB color)
   }
 }
 
-void Display::SetLed(int x, int y, CRGB color) 
+void Display::SetLed(int x, int y, CRGB color)
 {
   if (x < 0 || x >= MATRIX_WIDTH || y < 0 || y >= MATRIX_HEIGHT) {
     return;
@@ -56,7 +62,7 @@ void Display::SetLed(int x, int y, CRGB color)
   leds[index] = color;
 }
 
-void Display::DrawDigit(int x, int y, int digit, CRGB color) 
+void Display::DrawDigit(int x, int y, int digit, CRGB color)
 {
   for (int row = 0; row < 8; row++) {
     for (int col = 0; col < 5; col++) {
