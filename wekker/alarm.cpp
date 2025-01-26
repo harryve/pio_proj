@@ -38,11 +38,10 @@ bool Alarm::tick(bool &invert)
       count = ALARM_COUNT;
       tones = BEEP_COUNT - 1;
       startTime = millis();
-      //tone(buzzerPin, FREQUENCY);
+      tone(buzzerPin, FREQUENCY);
       Serial.println("BEEP 1st");
       redraw = true;
       invert = true;
-      //DisplayRedrawTime(true);
       state = ON;
       break;
 
@@ -50,8 +49,7 @@ bool Alarm::tick(bool &invert)
       if (millis() - startTime < DUTY_TIME) {
         break;
       }
-      //noTone(buzzerPin);
-      //DisplayRedrawTime(false);
+      noTone(buzzerPin);
       redraw = true;
       invert = false;
       if (--count > 0) {
@@ -68,19 +66,18 @@ bool Alarm::tick(bool &invert)
         break;
       }
       if (tones > 0) {
-        //tone(buzzerPin, FREQUENCY);
+        tone(buzzerPin, FREQUENCY);
         tones--;
         Serial.println("BEEP");
       }
       redraw = true;
       invert = true;
-      //DisplayRedrawTime(true);
       state = ON;
       startTime = millis();
       break;
 
     default:
-      //noTone(buzzerPin);
+      noTone(buzzerPin);
       break;
   }
   return redraw;

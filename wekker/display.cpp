@@ -35,9 +35,9 @@ void Display::InitLeds()
 //  Serial.print(".");
 //}
 
-void Display::SetBrightness(int b)
+void Display::SetBrightness(int brightness)
 {
-  brightness = b;
+    FastLED.setBrightness(brightness);
 }
 
 void Display::Fill(CRGB color)

@@ -16,6 +16,5 @@ protected:
   void SetLed(int x, int y, CRGB color);
   void DrawDigit(int x, int y, int digit, CRGB color); 
   
-private:
-  int brightness;
+//private:
 };
