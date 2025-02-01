@@ -1,11 +1,3 @@
-/**
- * ----------------------------------------------------------------------------
- * ESP32 Remote Control with WebSocket
- * ----------------------------------------------------------------------------
- * © 2020 Stéphane Calderoni
- * ----------------------------------------------------------------------------
- */
-
 var gateway = `ws://${window.location.hostname}/ws`;
 var websocket;
 
@@ -15,16 +7,18 @@ var websocket;
 
 window.addEventListener('load', onLoad);
 
-function onLoad(event) {
+function onLoad(event)
+{
     initWebSocket();
-    initButton();
+    initButtons();
 }
 
 // ----------------------------------------------------------------------------
 // WebSocket handling
 // ----------------------------------------------------------------------------
 
-function initWebSocket() {
+function initWebSocket()
+{
     console.log('Trying to open a WebSocket connection...');
     websocket = new WebSocket(gateway);
     websocket.onopen    = onOpen;
@@ -32,16 +26,19 @@ function initWebSocket() {
     websocket.onmessage = onMessage;
 }
 
-function onOpen(event) {
+function onOpen(event)
+{
     console.log('Connection opened');
 }
 
-function onClose(event) {
+function onClose(event)
+{
     console.log('Connection closed');
     setTimeout(initWebSocket, 2000);
 }
 
-function onMessage(event) {
+function onMessage(event)
+{
     let data = JSON.parse(event.data);
     document.getElementById('led').className = data.status;
 }
@@ -50,10 +47,18 @@ function onMessage(event) {
 // Button handling
 // ----------------------------------------------------------------------------
 
-function initButton() {
+function initButtons()
+{
+    document.getElementById('submit').addEventListener('click', onSubmit);
     document.getElementById('toggle').addEventListener('click', onToggle);
 }
 
-function onToggle(event) {
+function onToggle(event)
+{
     websocket.send(JSON.stringify({'action':'toggle'}));
+}
+
+function onSubmit(event)
+{
+    websocket.send(JSON.stringify({'action':'submit'}));
 }

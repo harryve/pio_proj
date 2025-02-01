@@ -66,7 +66,23 @@ static void ReadFile(fs::FS &fs, const char * path)
 
 String processor(const String &var)
 {
-    return String(var == "STATE" && SettingsGetAlarmActive() ? "on" : "off");
+    Serial.println(var.c_str());
+    if (var == "STATE") {
+        return String(SettingsGetAlarmActive() ? "on" : "off");
+    }
+
+    if (var == "WAKEUPTIME") {
+        return String("06:01");
+    }
+
+    if (var == "UPTIME") {
+        return String("1:23");
+    }
+
+    if (var == "REBOOTCOUNT") {
+        return String("1962");
+    }
+    return String("???");
 }
 
 void onRootRequest(AsyncWebServerRequest *request)
@@ -110,7 +126,12 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
         }
 
         const char *action = json["action"];
+        Serial.println(action);
         if (strcmp(action, "toggle") == 0) {
+            SettingsToggleAlarmActive();
+            //notifyClients();
+        }
+        if (strcmp(action, "submit") == 0) {
             SettingsToggleAlarmActive();
             //notifyClients();
         }

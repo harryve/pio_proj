@@ -6,10 +6,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="description" content="Harrys wekker">
-  <title>ESP32 remote control</title>
-  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <title>Harrys wekker</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
   <link rel="stylesheet" href="index.css">
   <script src="index.js"></script>
+
+  <style>
+  table {
+    display: table;
+    border-collapse: separate;
+    border-spacing: 2px;
+  }
+
+  th, td {
+    border: 1px solid red;
+    padding-top: 2px;
+    padding-right: 30px;
+    padding-bottom: 2px;
+    padding-left: 10px;
+  }
+  </style>
+
 </head>
 
 <body>
@@ -17,6 +37,28 @@
     <h1>Harrys wekker</h1>
     <div id="led" class="%STATE%"></div>
     <button id="toggle">Toggle</button>
+    <table>
+      <tr>
+        <td>Alarm</td>
+        <td>on</td>
+      </tr>
+      <tr>
+        <td>Wakeup time</td>
+        <td>%WAKEUPTIME%</td>
+      </tr>
+      <tr>
+        <td>Uptime [min]</td>
+        <td>%UPTIME%</td>
+      </tr>
+      <tr>
+        <td>Reboot count</td>
+        <td>%REBOOTCOUNT%</td>
+      </tr>
+    </table>
+
+    <!--label for="time">Wektijd:</label-->
+    <input type="time" id="time" name="time">
+    <button id="submit">Submit</button>
   </div>
 </body>
 
