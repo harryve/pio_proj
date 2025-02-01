@@ -9,6 +9,7 @@
 #include "ldr.h"
 #include "network.h"
 #include "webserver.h"
+#include "settings.h"
 
 const char* ntpServer = "ntp.harry.thuis";
 //const char* ntpServer = "pool.ntp.org";
@@ -171,7 +172,7 @@ void loop()
     if (dispTime != ((timeinfo.tm_hour * 100) + timeinfo.tm_min)) {
       dispTime = (timeinfo.tm_hour * 100) + timeinfo.tm_min;
 
-      if ((dispTime == 600) && alarmClock.AlarmActive()) {
+      if ((dispTime == 600) && SettingsGetAlarmActive()) {
         alarmBuzzer.trigger();
       }
       Serial.printf("Time = %d\n", dispTime);

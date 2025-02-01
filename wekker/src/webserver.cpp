@@ -2,15 +2,13 @@
 #include <ESPAsyncWebServer.h>
 #include <ArduinoJson.h>
 #include "SPIFFS.h"
+#include "settings.h"
 #include "webserver.h"
 
 #define HTTP_PORT 80
 
 AsyncWebServer server(HTTP_PORT);
 AsyncWebSocket ws("/ws");
-
-
-//#include "FS.h"
 
 static void ListDir(fs::FS &fs, const char * dirname, uint8_t levels)
 {
@@ -68,22 +66,13 @@ static void ReadFile(fs::FS &fs, const char * path)
 
 String processor(const String &var)
 {
-    //return String(var == "STATE" && led.on ? "on" : "off");
-    return("off");
+    return String(var == "STATE" && SettingsGetAlarmActive() ? "on" : "off");
 }
 
 void onRootRequest(AsyncWebServerRequest *request)
 {
   Serial.printf("onRootRequest\n");
   request->send(SPIFFS, "/index.html", "text/html", false, processor);
-}
-
-void initWebServer()
-{
-    Serial.printf("initWebServer\n");
-    server.on("/", onRootRequest);
-    server.serveStatic("/", SPIFFS, "/");
-    server.begin();
 }
 
 // ----------------------------------------------------------------------------
@@ -96,7 +85,7 @@ void notifyClients()
     //const uint8_t size = JSON_OBJECT_SIZE(1);
     //StaticJsonDocument<size> json;
     JsonDocument json;
-    json["status"] = "off"; //led.on ? "on" : "off";
+    json["status"] = SettingsGetAlarmActive() ? "on" : "off";
 
     char buffer[17];
     size_t len = serializeJson(json, buffer);
@@ -122,19 +111,19 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
 
         const char *action = json["action"];
         if (strcmp(action, "toggle") == 0) {
-            //led.on = !led.on;
-            notifyClients();
+            SettingsToggleAlarmActive();
+            //notifyClients();
         }
-
     }
 }
 
-void onEvent(AsyncWebSocket       *server,
+static void OnEvent(AsyncWebSocket       *server,
              AsyncWebSocketClient *client,
              AwsEventType          type,
              void                 *arg,
              uint8_t              *data,
-             size_t                len) {
+             size_t                len)
+{
 
     Serial.printf("WebSocket onEvent\n");
     switch (type) {
@@ -153,10 +142,6 @@ void onEvent(AsyncWebSocket       *server,
     }
 }
 
-void initWebSocket() {
-    ws.onEvent(onEvent);
-    server.addHandler(&ws);
-}
 
 
 
@@ -169,8 +154,17 @@ void WebserverInit()
     ListDir(SPIFFS, "/", 0);
     ReadFile(SPIFFS, "/hallo.txt");
 
-    initWebSocket();
-    initWebServer();
+    // Init WebSocket
+    ws.onEvent(OnEvent);
+    server.addHandler(&ws);
+
+    // Init webserver
+    Serial.printf("initWebServer\n");
+    server.on("/", onRootRequest);
+    server.serveStatic("/", SPIFFS, "/");
+    server.begin();
+
+    SettingsSetChangeCb(notifyClients);
 
 }
 

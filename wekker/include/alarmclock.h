@@ -4,21 +4,18 @@
 
 class AlarmClock : public Display {
 public:
-  AlarmClock();
-  void init(int brightness, CRGB color);
-  virtual void Tick();
-  virtual void ButtonHandler(Button::Id id, Button::Event event);
-  bool AlarmActive();
-  void SetColor(CRGB color);
+    AlarmClock();
+    void init(int brightness, CRGB color);
+    virtual void Tick();
+    virtual void ButtonHandler(Button::Id id, Button::Event event);
+    void SetColor(CRGB color);
 
-  void Invert(bool invert);
-  void SetTime(int hours, int minutes);
+    void Invert(bool invert);
+    void SetTime(int hours, int minutes);
 
 private:
-  bool invert;
-  bool alarmActive;
-  int hours;
-  int minutes;
-  CRGB color;
-
+    bool invert;
+    int hours;
+    int minutes;
+    CRGB color;
 };

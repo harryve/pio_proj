@@ -1,5 +1,5 @@
 #include <Arduino.h>
-// #include "settings.h"
+ #include "settings.h"
 #include "network.h"
 #include "alarmclock.h"
 
@@ -7,7 +7,6 @@
 
 AlarmClock::AlarmClock()
 {
-  alarmActive = false;
   drawRequest = false;
 }
 
@@ -22,11 +21,6 @@ void AlarmClock::SetColor(CRGB c)
 {
   color = c;
   drawRequest = true;
-}
-
-bool AlarmClock::AlarmActive()
-{
-  return alarmActive;
 }
 
 void AlarmClock::Tick()
@@ -44,8 +38,8 @@ void AlarmClock::Tick()
   }
 
   CRGB c;
-  if (alarmActive) {
-    c = invert ? CRGB::Black : CRGB::Red; 
+  if (SettingsGetAlarmActive()) {
+    c = invert ? CRGB::Black : CRGB::Red;
     SetLed(0, 0, c);
   }
 
@@ -68,7 +62,7 @@ void AlarmClock::Tick()
   DrawDigit(x + 22, 0, minutes % 10, c);
 
   int netwerkErrors = NetworkGetErrors();
-  c = invert ? CRGB::Black : CRGB::Red; 
+  c = invert ? CRGB::Black : CRGB::Red;
   for (int i = 0; i < 8; i++) {
     if (netwerkErrors & (1 << i)) {
       SetLed(31, i, c);
@@ -81,7 +75,7 @@ void AlarmClock::ButtonHandler(Button::Id id, Button::Event event)
 {
   Serial.println("ButtonHandler");
   if ((id == Button::Id::MID) && (event == Button::Event::SHORT_PRESS)) {
-    alarmActive = alarmActive ? false : true;
+    SettingsToggleAlarmActive();
     drawRequest = true;
   }
 
