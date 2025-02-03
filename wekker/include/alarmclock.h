@@ -7,8 +7,8 @@ public:
     AlarmClock();
     void init(int brightness, CRGB color);
     virtual void Tick();
-    virtual void ButtonHandler(Button::Id id, Button::Event event);
-    void SetColor(CRGB color);
+    virtual int ButtonHandler(Button::Id id, Button::Event event);
+    void SetColor(int brightness);
 
     void Invert(bool invert);
     void SetTime(int hours, int minutes);

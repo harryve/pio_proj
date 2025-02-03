@@ -6,7 +6,7 @@ class SetAlarmTs : public Display {
 public:
   SetAlarmTs();
   virtual void Tick();
-  virtual void ButtonHandler(Button::Id id, Button::Event event);
+  virtual int ButtonHandler(Button::Id id, Button::Event event);
   void SetWakeupTime(int hours, int minutes);
 
 private:

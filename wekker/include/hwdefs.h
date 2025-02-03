@@ -16,3 +16,4 @@
 #define DATA_PIN 32
 #define MATRIX_WIDTH 32
 #define MATRIX_HEIGHT 8
+#define MAX_BRIGHTNESS 35

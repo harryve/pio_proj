@@ -80,7 +80,9 @@ String processor(const String &var)
     }
 
     if (var == "REBOOTCOUNT") {
-        return String("1962");
+        char buffer[16];
+        sprintf(buffer, "%ld", SettingsGetRebootCounter());
+        return String(buffer);
     }
     return String("???");
 }
@@ -97,15 +99,24 @@ void onRootRequest(AsyncWebServerRequest *request)
 
 void notifyClients()
 {
+    char wakeupTimeBuf[16];
+    char upTimeBuf[16];
+    char rebootCountBuf[16];
+
+    snprintf(wakeupTimeBuf, sizeof(wakeupTimeBuf), "%d:%02d", SettingsGetWakeupTime() / 100, SettingsGetWakeupTime() % 100);
+    snprintf(upTimeBuf, sizeof(upTimeBuf), "%d", SettingsGetUptime());
+    snprintf(rebootCountBuf, sizeof(rebootCountBuf), "%d", SettingsGetRebootCounter());
+
     Serial.printf("notifyClients\n");
-    //const uint8_t size = JSON_OBJECT_SIZE(1);
-    //StaticJsonDocument<size> json;
     JsonDocument json;
     json["status"] = SettingsGetAlarmActive() ? "on" : "off";
-
-    char buffer[17];
-    size_t len = serializeJson(json, buffer);
-    ws.textAll(buffer, len);
+    json["wakeuptime"] = wakeupTimeBuf;
+    json["uptime"] =  upTimeBuf;
+    json["reboot_count"] = rebootCountBuf;
+    char jsonBuffer[128];
+    Serial.printf("%s\n", jsonBuffer);
+    size_t len = serializeJson(json, jsonBuffer);
+    ws.textAll(jsonBuffer, len);
 }
 
 void handleWebSocketMessage(void *arg, uint8_t *data, size_t len)

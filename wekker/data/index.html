@@ -7,6 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="description" content="Harrys wekker">
   <title>Harrys wekker</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -40,19 +41,19 @@
     <table>
       <tr>
         <td>Alarm</td>
-        <td>on</td>
+        <td id="alarm_state">%STATE%</td>
       </tr>
       <tr>
         <td>Wakeup time</td>
-        <td>%WAKEUPTIME%</td>
+        <td id="wakeuptime">%WAKEUPTIME%</td>
       </tr>
       <tr>
         <td>Uptime [min]</td>
-        <td>%UPTIME%</td>
+        <td id="uptime">%UPTIME%</td>
       </tr>
       <tr>
         <td>Reboot count</td>
-        <td>%REBOOTCOUNT%</td>
+        <td id="reboot_count">%REBOOTCOUNT%</td>
       </tr>
     </table>
 
