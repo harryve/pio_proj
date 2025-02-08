@@ -10,79 +10,99 @@
 AsyncWebServer server(HTTP_PORT);
 AsyncWebSocket ws("/ws");
 
-static void ListDir(fs::FS &fs, const char * dirname, uint8_t levels)
+// static void ListDir(fs::FS &fs, const char * dirname, uint8_t levels)
+// {
+//     Serial.printf("Listing directory: %s\n", dirname);
+
+//     File root = fs.open(dirname);
+//     if (!root) {
+//         Serial.println("- failed to open directory");
+//         return;
+//     }
+//     if (!root.isDirectory()) {
+//         Serial.println(" - not a directory");
+//         return;
+//     }
+
+//     File file = root.openNextFile();
+//     while (file) {
+//         if (file.isDirectory()) {
+//             Serial.print("  DIR : ");
+//             Serial.println(file.name());
+//             if (levels) {
+//                 ListDir(fs, file.name(), levels - 1);
+//             }
+//         }
+//         else {
+//             Serial.print("  FILE: ");
+//             Serial.print(file.name());
+//             Serial.print("\tSIZE: ");
+//             Serial.println(file.size());
+//         }
+//         file = root.openNextFile();
+//     }
+// }
+
+static const char *GetAlarmActiveStr()
 {
-    Serial.printf("Listing directory: %s\n", dirname);
-
-    File root = fs.open(dirname);
-    if (!root) {
-        Serial.println("- failed to open directory");
-        return;
+    if (SettingsGetAlarmActive()) {
+        return "on";
     }
-    if (!root.isDirectory()) {
-        Serial.println(" - not a directory");
-        return;
-    }
-
-    File file = root.openNextFile();
-    while (file) {
-        if (file.isDirectory()) {
-            Serial.print("  DIR : ");
-            Serial.println(file.name());
-            if (levels) {
-                ListDir(fs, file.name(), levels - 1);
-            }
-        }
-        else {
-            Serial.print("  FILE: ");
-            Serial.print(file.name());
-            Serial.print("\tSIZE: ");
-            Serial.println(file.size());
-        }
-        file = root.openNextFile();
-    }
+    return "off";
 }
 
-static void ReadFile(fs::FS &fs, const char * path)
+static char *GetWakupStr()
 {
-    Serial.printf("Reading file: %s\r\n", path);
-
-    File file = fs.open(path);
-    if (!file || file.isDirectory()) {
-        Serial.println("- failed to open file for reading");
-        return;
-    }
-
-    Serial.println("- read from file:");
-    while (file.available()){
-        Serial.write(file.read());
-    }
-    file.close();
+    static char wakeupTimeBuf[16];
+    snprintf(wakeupTimeBuf, sizeof(wakeupTimeBuf), "%02d:%02d", SettingsGetWakeupTime() / 60, SettingsGetWakeupTime() % 60);
+    return wakeupTimeBuf;
 }
 
-// ----------------------------------------------------------------------------
-// Web server initialization
-// ----------------------------------------------------------------------------
+static char *GetUpTimeStr()
+{
+    static char upTimeBuf[32];
+    uint32_t uptime = SettingsGetUptime();
+    uint32_t days, hours, mins;
+
+    days = uptime / (24 * 60);
+    uptime -= days * 24 * 60;
+    hours = uptime / 60;
+    uptime -= hours * 60;
+    mins = uptime;
+
+    int l = 0;
+    if (days > 0) {
+        l = snprintf(upTimeBuf, sizeof(upTimeBuf), "%d days ", days);
+    }
+    snprintf(&upTimeBuf[l], sizeof(upTimeBuf) - l, "%d:%02d", hours, mins);
+
+    return upTimeBuf;
+}
+
+static char *GetRebootStr()
+{
+    static char rebootCountBuf[16];
+    snprintf(rebootCountBuf, sizeof(rebootCountBuf), "%d", SettingsGetRebootCounter());
+    return rebootCountBuf;
+}
 
 String processor(const String &var)
 {
     Serial.println(var.c_str());
     if (var == "STATE") {
-        return String(SettingsGetAlarmActive() ? "on" : "off");
+        return String(GetAlarmActiveStr());
     }
 
     if (var == "WAKEUPTIME") {
-        return String("06:01");
+        return String(GetWakupStr());
     }
 
     if (var == "UPTIME") {
-        return String("1:23");
+        return String(GetUpTimeStr());
     }
 
     if (var == "REBOOTCOUNT") {
-        char buffer[16];
-        sprintf(buffer, "%ld", SettingsGetRebootCounter());
-        return String(buffer);
+        return String(GetRebootStr());
     }
     return String("???");
 }
@@ -93,29 +113,21 @@ void onRootRequest(AsyncWebServerRequest *request)
   request->send(SPIFFS, "/index.html", "text/html", false, processor);
 }
 
-// ----------------------------------------------------------------------------
-// WebSocket initialization
-// ----------------------------------------------------------------------------
-
 void notifyClients()
 {
-    char wakeupTimeBuf[16];
-    char upTimeBuf[16];
-    char rebootCountBuf[16];
-
-    snprintf(wakeupTimeBuf, sizeof(wakeupTimeBuf), "%d:%02d", SettingsGetWakeupTime() / 100, SettingsGetWakeupTime() % 100);
-    snprintf(upTimeBuf, sizeof(upTimeBuf), "%d", SettingsGetUptime());
-    snprintf(rebootCountBuf, sizeof(rebootCountBuf), "%d", SettingsGetRebootCounter());
-
+    if (ws.count() == 0) {
+        Serial.printf("No connections, skip notify\n");
+        return;
+    }
     Serial.printf("notifyClients\n");
     JsonDocument json;
-    json["status"] = SettingsGetAlarmActive() ? "on" : "off";
-    json["wakeuptime"] = wakeupTimeBuf;
-    json["uptime"] =  upTimeBuf;
-    json["reboot_count"] = rebootCountBuf;
+    json["status"] = GetAlarmActiveStr();
+    json["wakeuptime"] = GetWakupStr();
+    json["uptime"] =  GetUpTimeStr();
+    json["reboot_count"] = GetRebootStr();
     char jsonBuffer[128];
-    Serial.printf("%s\n", jsonBuffer);
     size_t len = serializeJson(json, jsonBuffer);
+    Serial.printf("%s\n", jsonBuffer);
     ws.textAll(jsonBuffer, len);
 }
 
@@ -126,8 +138,6 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
     AwsFrameInfo *info = (AwsFrameInfo*)arg;
     if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
 
-        //const uint8_t size = JSON_OBJECT_SIZE(1);
-        //StaticJsonDocument<size> json;
         JsonDocument json;
         DeserializationError err = deserializeJson(json, data);
         if (err) {
@@ -136,25 +146,33 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
             return;
         }
 
-        const char *action = json["action"];
-        Serial.println(action);
-        if (strcmp(action, "toggle") == 0) {
-            SettingsToggleAlarmActive();
-            //notifyClients();
+        if (json["action"].is<JsonVariant>()) {
+            const char *action = json["action"];
+            Serial.printf("Action = %s\n", action);
+            if (strcmp(action, "toggle") == 0) {
+                SettingsToggleAlarmActive();
+            }
         }
-        if (strcmp(action, "submit") == 0) {
-            SettingsToggleAlarmActive();
-            //notifyClients();
+
+        if (json["submit"].is<JsonVariant>()) {
+            const char *wakeupTime = json["submit"];
+            Serial.printf("Submit [%s}\n", wakeupTime);
+            if (strlen(wakeupTime) == 5) {
+                int hour, min;
+                if (sscanf(wakeupTime, "%d:%d", &hour, &min) == 2) {
+                    SettingsSetWakeupTime((uint16_t)(hour * 60 + min));
+                }
+            }
         }
     }
 }
 
 static void OnEvent(AsyncWebSocket       *server,
-             AsyncWebSocketClient *client,
-             AwsEventType          type,
-             void                 *arg,
-             uint8_t              *data,
-             size_t                len)
+                    AsyncWebSocketClient *client,
+                    AwsEventType          type,
+                    void                 *arg,
+                    uint8_t              *data,
+                    size_t                len)
 {
 
     Serial.printf("WebSocket onEvent\n");
@@ -174,17 +192,14 @@ static void OnEvent(AsyncWebSocket       *server,
     }
 }
 
-
-
-
 void WebserverInit()
 {
     if (!SPIFFS.begin()) {
         Serial.println("SPIFFS Mount Failed");
         return;
     }
-    ListDir(SPIFFS, "/", 0);
-    ReadFile(SPIFFS, "/hallo.txt");
+    //ListDir(SPIFFS, "/", 0);
+    //ReadFile(SPIFFS, "/hallo.txt");
 
     // Init WebSocket
     ws.onEvent(OnEvent);
@@ -197,7 +212,6 @@ void WebserverInit()
     server.begin();
 
     SettingsSetChangeCb(notifyClients);
-
 }
 
 void WebserverTick()

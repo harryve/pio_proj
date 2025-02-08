@@ -28,20 +28,20 @@ Alarm alarmBuzzer = Alarm(BUZZER_PIN);
 
 void ButtonHandler(Button::Id id, Button::Event event)
 {
-    switch (event) {
-        case Button::Event::SHORT_PRESS:    Serial.printf("%d: SP\n", (int)id); break;
-        case Button::Event::LONG_PRESS:     Serial.printf("%d: LP\n", (int)id); break;
-        case Button::Event::LONG_PRESS_END: Serial.printf("%d: LE\n", (int)id); break;
-        default: Serial.printf("%d: ???\n", (int)id); break;
-    }
+    // switch (event) {
+    //     case Button::Event::SHORT_PRESS:    Serial.printf("%d: SP\n", (int)id); break;
+    //     case Button::Event::LONG_PRESS:     Serial.printf("%d: LP\n", (int)id); break;
+    //     case Button::Event::LONG_PRESS_END: Serial.printf("%d: LE\n", (int)id); break;
+    //     default: Serial.printf("%d: ???\n", (int)id); break;
+    // }
 
-    if (event == Button::Event::SHORT_PRESS && id == Button::Id::LEFT) {
-        mode = 1 - mode;
-        handlers[mode]->Redraw();
-    }
-    else {
+    // if (event == Button::Event::SHORT_PRESS && id == Button::Id::LEFT) {
+    //     mode = 1 - mode;
+    //     handlers[mode]->Redraw();
+    // }
+    // else {
         mode = handlers[mode]->ButtonHandler(id, event);
-    }
+    //}
 }
 
 Button button1 = Button(BUTTON_LEFT_PIN, Button::Id::LEFT, ButtonHandler);

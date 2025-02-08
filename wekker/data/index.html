@@ -14,27 +14,10 @@
 
   <link rel="stylesheet" href="index.css">
   <script src="index.js"></script>
-
-  <style>
-  table {
-    display: table;
-    border-collapse: separate;
-    border-spacing: 2px;
-  }
-
-  th, td {
-    border: 1px solid red;
-    padding-top: 2px;
-    padding-right: 30px;
-    padding-bottom: 2px;
-    padding-left: 10px;
-  }
-  </style>
-
 </head>
 
 <body>
-  <div class="panel">
+  <div class="panel1">
     <h1>Harrys wekker</h1>
     <div id="led" class="%STATE%"></div>
     <button id="toggle">Toggle</button>
@@ -57,10 +40,12 @@
       </tr>
     </table>
 
-    <!--label for="time">Wektijd:</label-->
-    <input type="time" id="time" name="time">
-    <button id="submit">Submit</button>
   </div>
+  <div class="panel2">
+    <label for="time">Wektijd</label>
+    <input type="time" id="time" name="time" value=%WAKEUPTIME%>
+    <button id="submit">Bewaar</button>
+  </div>
+<br>
 </body>
-
 </html>

@@ -7,6 +7,7 @@ static Preferences prefs;
 // The entruies stored in NVS
 static bool alarmActive;
 static uint32_t rebootCounter;
+static uint16_t wakeupTime;
 // End of entries list
 
 static uint32_t uptime;
@@ -22,12 +23,13 @@ void SettingsInit()
     prefs.putULong("rebootcount", rebootCounter);
 
     alarmActive = prefs.getBool("alarmactive", false);
+    wakeupTime = prefs.getShort("wakeuptime", 6 * 60);
 
 //    prefs.end();
 
-    Serial.printf("Reboot counter = %ld", rebootCounter);
-    Serial.printf("Alarm active = %d", (int)alarmActive);
-
+    Serial.printf("Reboot counter = %ld\n", rebootCounter);
+    Serial.printf("Alarm active = %d\n", (int)alarmActive);
+    Serial.printf("Wakeup time = %d\n", wakeupTime);
 }
 
 void SettingsSetChangeCb(void (*p)())
@@ -56,7 +58,18 @@ uint32_t SettingsGetRebootCounter()
 
 uint16_t SettingsGetWakeupTime()
 {
-    return 600;
+    return wakeupTime;
+}
+
+void SettingsSetWakeupTime(uint16_t val)
+{
+    if (val < 2400) {
+        wakeupTime = val;
+        prefs.putShort("wakeuptime", wakeupTime);
+        if (changeCb != NULL) {
+            changeCb();
+        }
+    }
 }
 
 void SettingsSetUptime(uint32_t val)

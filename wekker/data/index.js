@@ -45,6 +45,7 @@ function onMessage(event)
     document.getElementById('wakeuptime').innerHTML = data.wakeuptime;
     document.getElementById('uptime').innerHTML = data.uptime;
     document.getElementById('reboot_count').innerHTML = data.reboot_count;
+    document.getElementById("time").value = data.wakeuptime;
 }
 
 // ----------------------------------------------------------------------------
@@ -64,5 +65,7 @@ function onToggle(event)
 
 function onSubmit(event)
 {
-    websocket.send(JSON.stringify({'action':'submit'}));
+    const timeValue = document.getElementById("time").value;
+    //var wakeuptime = document.getElementById('time').innerHTML;
+    websocket.send(JSON.stringify({'submit':timeValue}));
 }

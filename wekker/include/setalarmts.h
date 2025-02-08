@@ -4,12 +4,10 @@
 
 class SetAlarmTs : public Display {
 public:
-  SetAlarmTs();
-  virtual void Tick();
-  virtual int ButtonHandler(Button::Id id, Button::Event event);
-  void SetWakeupTime(int hours, int minutes);
+    SetAlarmTs();
+    virtual void Tick();
+    virtual int ButtonHandler(Button::Id id, Button::Event event);
 
 private:
-  int hours;
-  int minutes;
+    int wakeupTime;
 };

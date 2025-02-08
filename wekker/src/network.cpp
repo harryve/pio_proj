@@ -14,115 +14,100 @@ static int networkErrors = 0;
 
 void NetworkInit()
 {
-  int timo = 20;
+    int timo = 20;
 
-  networkErrors = 0;
+    networkErrors = 0;
 
-  // Connect to Wi-Fi
-  WiFi.setHostname("wekker");
-  WiFi.begin(SSID, PASSWORD);
-  while (timo-- > 0 && WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-  Serial.println("\n");
-  if (WiFi.status() != WL_CONNECTED) {
-    networkErrors |= NWK_NO_WIFI;
-    Serial.println("Cannot connect to WiFi");
-    return;
-  }
-  Serial.println("Connected to WiFi");
-
-  mqttClient.setId("wekker");
-  Serial.print("Attempting to connect to the MQTT broker: ");
-  if (!mqttClient.connect(MQTT_BROKER, 1883)) {
-    Serial.print("MQTT connection failed! Error code = ");
-    Serial.println(mqttClient.connectError());
-    networkErrors |= NWK_NO_MQTT;
-  }
-  else {
-    Serial.println("Connected to the MQTT broker!");
-    Serial.println();
-  }
-}
-
-void NetworkTick() 
-{
-  static unsigned long previousMillis;
-  unsigned long currentMillis = millis();
-
-  if (currentMillis - previousMillis >= 60000) {
-    previousMillis = currentMillis;
-
+    // Connect to Wi-Fi
+    WiFi.setHostname("wekker");
+    WiFi.begin(SSID, PASSWORD);
+    while (timo-- > 0 && WiFi.status() != WL_CONNECTED) {
+        delay(500);
+        Serial.print(".");
+    }
+    Serial.println("\n");
     if (WiFi.status() != WL_CONNECTED) {
-      Serial.println("Reconnecting to WiFi...");
-      networkErrors |= (NWK_NO_WIFI | NWK_NO_MQTT); 
-      mqttClient.stop();
-      WiFi.disconnect();
-      WiFi.reconnect();
+        networkErrors |= NWK_NO_WIFI;
+        Serial.println("Cannot connect to WiFi");
+        return;
+    }
+    Serial.println("Connected to WiFi");
+
+    mqttClient.setId("wekker");
+    Serial.print("Attempting to connect to the MQTT broker: ");
+    if (!mqttClient.connect(MQTT_BROKER, 1883)) {
+        Serial.print("MQTT connection failed! Error code = ");
+        Serial.println(mqttClient.connectError());
+        networkErrors |= NWK_NO_MQTT;
     }
     else {
-      networkErrors &= ~NWK_NO_WIFI; 
+        Serial.println("Connected to the MQTT broker!");
+        Serial.println();
+    }
+}
 
-      if (mqttClient.connected() == 0) {
-        networkErrors |= NWK_NO_MQTT; 
-        if (!mqttClient.connect(MQTT_BROKER, 1883)) {
-          Serial.print("MQTT connection failed! Error code = ");
-          Serial.println(mqttClient.connectError());
+void NetworkTick()
+{
+    static unsigned long previousMillis;
+    unsigned long currentMillis = millis();
+
+    if (currentMillis - previousMillis >= 60000) {
+        previousMillis = currentMillis;
+
+        if (WiFi.status() != WL_CONNECTED) {
+            Serial.println("Reconnecting to WiFi...");
+            networkErrors |= (NWK_NO_WIFI | NWK_NO_MQTT);
+            mqttClient.stop();
+            WiFi.disconnect();
+            WiFi.reconnect();
         }
-        else { 
-          Serial.println("Reconnected to the MQTT broker!");
+        else {
+            networkErrors &= ~NWK_NO_WIFI;
+
+            if (mqttClient.connected() == 0) {
+                networkErrors |= NWK_NO_MQTT;
+                if (!mqttClient.connect(MQTT_BROKER, 1883)) {
+                    Serial.print("MQTT connection failed! Error code = ");
+                    Serial.println(mqttClient.connectError());
+                }
+                else {
+                    Serial.println("Reconnected to the MQTT broker!");
+                }
+            }
+            else {
+                networkErrors &= ~NWK_NO_MQTT;
+            }
         }
-      }
-      else {
-        networkErrors &= ~NWK_NO_MQTT; 
-      }
-    } 
-  }
-  mqttClient.poll();
+    }
+    mqttClient.poll();
 }
 
 int NetworkGetErrors()
 {
-  unsigned long interval = sntp_get_sync_interval();
-  //Serial.printf("Interval = %d\n", interval);
-  if (interval > 3600*1000) {
-      sntp_set_sync_interval(3600*1000);
-      if (!sntp_restart()) {
-        Serial.println("SNTP restart failed");
-      }
-      else {
-        Serial.println("SNTP restarted");
-      }
-  }
-  unsigned int reachability = sntp_getreachability(0);
-  //Serial.printf("Reachability = %x\n", reachability);
+    unsigned long interval = sntp_get_sync_interval();
 
-  if ((reachability & 0xf) == 0) {
-    networkErrors |= NWK_NO_NTP;
-  }
-  else {
-    networkErrors &= ~NWK_NO_NTP;
-  }
-//typedef enum {
-//    SNTP_SYNC_STATUS_RESET,         // Reset status.
-//    SNTP_SYNC_STATUS_COMPLETED,     // Time is synchronized.
-//    SNTP_SYNC_STATUS_IN_PROGRESS,   // Smooth time sync in progress.
-//} sntp_sync_status_t;
+    if (interval > 3600*1000) {
+        sntp_set_sync_interval(3600*1000);
+        if (!sntp_restart()) {
+            Serial.println("SNTP restart failed");
+        }
+        else {
+            Serial.println("SNTP restarted");
+        }
+    }
+    unsigned int reachability = sntp_getreachability(0);
 
-  //int status = esp_sntp_get_sync_status();
-  //Serial.printf("Status = %x\n", status);
-//  if (status != SNTP_SYNC_STATUS_COMPLETED) {
-//    networkErrors |= NWK_NO_NTP;
-//  }
-//  else {
-//    networkErrors &= ~NWK_NO_NTP;
-//  }
+    if ((reachability & 0xf) == 0) {
+        networkErrors |= NWK_NO_NTP;
+    }
+    else {
+        networkErrors &= ~NWK_NO_NTP;
+    }
 
-  return networkErrors;
+    return networkErrors;
 }
 
-static void Publish(const char *pTopic, int val) 
+static void Publish(const char *pTopic, int val)
 {
     char buf[16];
 
@@ -135,10 +120,10 @@ static void Publish(const char *pTopic, int val)
 
 void NetworkPublishLdr(int val)
 {
-  Publish("tele/wekker/sensor", val);
+    Publish("tele/wekker/sensor", val);
 }
 
 void NetworkPublishBrightness(int val)
 {
-  Publish("tele/wekker/brightness", val);
+    Publish("tele/wekker/brightness", val);
 }

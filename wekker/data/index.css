@@ -12,21 +12,43 @@ html, body {
   font-family: Roboto, sans-serif;
   font-size: 12pt;
   overflow: hidden;
-  background-color:Gainsboro
-/*rgb(255, 99, 71)*/
+  background-color:Gainsboro;
 }
 
 body {
   display: grid;
-  grid-template-rows: 1fr;
+  grid-template-rows: auto auto;
   align-items: center;
   justify-items: center;
 }
 
-.panel {
+table {
+    display: table;
+    border-collapse: separate;
+    border-spacing: 2px;
+  }
+
+  th, td {
+    border: 1px solid red;
+    padding-top: 2px;
+    padding-right: 30px;
+    padding-bottom: 2px;
+    padding-left: 5px;
+  }
+
+.panel1 {
   display: grid;
-  grid-gap: 3em;
+  grid-gap: 2em;
   justify-items: center;
+}
+.panel2 {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  grid-gap: 0.5em;
+  align-items: center;
+  justify-items: center;
+  //background-color:yellow;
+  font-size: 1.5rem;
 }
 
 h1 {
@@ -72,3 +94,8 @@ button {
 button:active {
   transform: translateY(2px);
 }
+
+input[type="time"] {
+    font-size: 1.5rem;
+}
+

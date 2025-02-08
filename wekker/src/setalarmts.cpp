@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include "network.h"
 #include "mode.h"
+#include "settings.h"
 #include "setalarmts.h"
 
 #include "display.h"
@@ -8,20 +9,28 @@
 SetAlarmTs::SetAlarmTs()
 {
     drawRequest = false;
-    hours = 99;
-    minutes = 99;
+    wakeupTime = 0;
 }
 
 void SetAlarmTs::Tick()
 {
-    if (!drawRequest) {
-        return;
+    int newTime = SettingsGetWakeupTime();
+    if (wakeupTime != newTime) {
+        wakeupTime = newTime;
+    }
+    else {
+        if (!drawRequest) {
+            return;
+        }
     }
     drawRequest = false;
     FastLED.clear();
 
     int x = 3;
     CRGB c = CRGB::Green;
+
+    int hours = wakeupTime / 60;
+    int minutes = wakeupTime % 60;
 
     if (hours / 10 != 0) {
         DrawDigit(x + 0, 0, hours / 10, c);
@@ -38,11 +47,4 @@ void SetAlarmTs::Tick()
 int SetAlarmTs::ButtonHandler(Button::Id id, Button::Event event)
 {
     return MODE_CLOCK;
-}
-
-void SetAlarmTs::SetWakeupTime(int h, int m)
-{
-    hours = h;
-    minutes = m;
-    drawRequest = true;
 }
