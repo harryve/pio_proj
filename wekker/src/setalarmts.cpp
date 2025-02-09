@@ -6,21 +6,32 @@
 
 #include "display.h"
 
+#define TIMEOUT (10 * 1000)       // ms
+
 SetAlarmTs::SetAlarmTs()
 {
     drawRequest = false;
     wakeupTime = 0;
 }
 
-void SetAlarmTs::Tick()
+void SetAlarmTs::Start()
 {
+    startTime = millis();
+}
+
+boolean SetAlarmTs::Tick()
+{
+    if (millis() - startTime > TIMEOUT) {
+        return false;
+    }
+
     int newTime = SettingsGetWakeupTime();
     if (wakeupTime != newTime) {
         wakeupTime = newTime;
     }
     else {
         if (!drawRequest) {
-            return;
+            return true;
         }
     }
     drawRequest = false;
@@ -42,9 +53,11 @@ void SetAlarmTs::Tick()
     DrawDigit(x + 22, 0, minutes % 10, c);
 
     FastLED.show();
+    return true;
 }
 
 int SetAlarmTs::ButtonHandler(Button::Id id, Button::Event event)
 {
+    Start();        // Restart time-out
     return MODE_CLOCK;
 }

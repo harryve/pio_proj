@@ -10,38 +10,14 @@
 AsyncWebServer server(HTTP_PORT);
 AsyncWebSocket ws("/ws");
 
-// static void ListDir(fs::FS &fs, const char * dirname, uint8_t levels)
-// {
-//     Serial.printf("Listing directory: %s\n", dirname);
-
-//     File root = fs.open(dirname);
-//     if (!root) {
-//         Serial.println("- failed to open directory");
-//         return;
-//     }
-//     if (!root.isDirectory()) {
-//         Serial.println(" - not a directory");
-//         return;
-//     }
-
-//     File file = root.openNextFile();
-//     while (file) {
-//         if (file.isDirectory()) {
-//             Serial.print("  DIR : ");
-//             Serial.println(file.name());
-//             if (levels) {
-//                 ListDir(fs, file.name(), levels - 1);
-//             }
-//         }
-//         else {
-//             Serial.print("  FILE: ");
-//             Serial.print(file.name());
-//             Serial.print("\tSIZE: ");
-//             Serial.println(file.size());
-//         }
-//         file = root.openNextFile();
-//     }
-// }
+static const char *GetAlarmToggleStr()
+{
+    // Text on button
+    if (SettingsGetAlarmActive()) {
+        return "Uit";
+    }
+    return "Aan";
+}
 
 static const char *GetAlarmActiveStr()
 {
@@ -89,6 +65,9 @@ static char *GetRebootStr()
 String processor(const String &var)
 {
     Serial.println(var.c_str());
+    if (var == "TOGGLE") {
+        return String(GetAlarmToggleStr());
+    }
     if (var == "STATE") {
         return String(GetAlarmActiveStr());
     }
@@ -116,25 +95,23 @@ void onRootRequest(AsyncWebServerRequest *request)
 void notifyClients()
 {
     if (ws.count() == 0) {
-        Serial.printf("No connections, skip notify\n");
         return;
     }
+
     Serial.printf("notifyClients\n");
     JsonDocument json;
+    json["toggle"] = GetAlarmToggleStr();
     json["status"] = GetAlarmActiveStr();
     json["wakeuptime"] = GetWakupStr();
     json["uptime"] =  GetUpTimeStr();
     json["reboot_count"] = GetRebootStr();
     char jsonBuffer[128];
     size_t len = serializeJson(json, jsonBuffer);
-    Serial.printf("%s\n", jsonBuffer);
     ws.textAll(jsonBuffer, len);
 }
 
 void handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
 {
-    Serial.printf("handleWebSocketMessage\n");
-
     AwsFrameInfo *info = (AwsFrameInfo*)arg;
     if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
 
@@ -148,7 +125,6 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
 
         if (json["action"].is<JsonVariant>()) {
             const char *action = json["action"];
-            Serial.printf("Action = %s\n", action);
             if (strcmp(action, "toggle") == 0) {
                 SettingsToggleAlarmActive();
             }
@@ -156,7 +132,6 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
 
         if (json["submit"].is<JsonVariant>()) {
             const char *wakeupTime = json["submit"];
-            Serial.printf("Submit [%s}\n", wakeupTime);
             if (strlen(wakeupTime) == 5) {
                 int hour, min;
                 if (sscanf(wakeupTime, "%d:%d", &hour, &min) == 2) {
@@ -198,8 +173,6 @@ void WebserverInit()
         Serial.println("SPIFFS Mount Failed");
         return;
     }
-    //ListDir(SPIFFS, "/", 0);
-    //ReadFile(SPIFFS, "/hallo.txt");
 
     // Init WebSocket
     ws.onEvent(OnEvent);

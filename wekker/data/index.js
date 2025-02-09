@@ -41,6 +41,7 @@ function onMessage(event)
 {
     let data = JSON.parse(event.data);
     document.getElementById('led').className = data.status;
+    document.getElementById('toggle').innerHTML = data.toggle;
     document.getElementById('alarm_state').innerHTML = data.status;
     document.getElementById('wakeuptime').innerHTML = data.wakeuptime;
     document.getElementById('uptime').innerHTML = data.uptime;

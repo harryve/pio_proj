@@ -1,8 +1,13 @@
 #include <Arduino.h>
 #include "settings.h"
 
+//#define USE_PREFS
+
+#ifdef USE_PREFS
 #include <Preferences.h>
+
 static Preferences prefs;
+#endif
 
 // The entruies stored in NVS
 static bool alarmActive;
@@ -16,6 +21,7 @@ static void (*changeCb)() = NULL;
 
 void SettingsInit()
 {
+#ifdef USE_PREFS
     prefs.begin("wekker");
 
     rebootCounter = prefs.getULong("rebootcount", 0);
@@ -24,8 +30,11 @@ void SettingsInit()
 
     alarmActive = prefs.getBool("alarmactive", false);
     wakeupTime = prefs.getShort("wakeuptime", 6 * 60);
-
-//    prefs.end();
+#else
+    rebootCounter = 0;
+    alarmActive = false;
+    wakeupTime = 6 * 60;
+#endif
 
     Serial.printf("Reboot counter = %ld\n", rebootCounter);
     Serial.printf("Alarm active = %d\n", (int)alarmActive);
@@ -40,7 +49,9 @@ void SettingsSetChangeCb(void (*p)())
 void SettingsToggleAlarmActive()
 {
     alarmActive = alarmActive ? false : true;
+#ifdef USE_PREFS
     prefs.putBool("alarmactive", alarmActive);
+#endif
     if (changeCb != NULL) {
         changeCb();
     }
@@ -65,7 +76,9 @@ void SettingsSetWakeupTime(uint16_t val)
 {
     if (val < 2400) {
         wakeupTime = val;
+#ifdef USE_PREFS
         prefs.putShort("wakeuptime", wakeupTime);
+#endif
         if (changeCb != NULL) {
             changeCb();
         }

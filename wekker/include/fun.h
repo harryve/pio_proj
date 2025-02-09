@@ -2,14 +2,15 @@
 #include "display.h"
 #include "button.h"
 
-class SetAlarmTs : public Display {
+class Fun : public Display {
 public:
-    SetAlarmTs();
+    Fun();
     virtual void Start();
     virtual boolean Tick();
     virtual int ButtonHandler(Button::Id id, Button::Event event);
 
 private:
     uint32_t startTime;
-    int wakeupTime;
+    uint32_t cycleTime;
+    int cycle;
 };

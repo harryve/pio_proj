@@ -19,6 +19,11 @@ void AlarmClock::init(int b, CRGB c)
     color = c;
 }
 
+void AlarmClock::Start()
+{
+
+}
+
 void AlarmClock::SetColor(int brightness)
 {
     int notRed = (brightness * 250) / MAX_BRIGHTNESS;
@@ -29,10 +34,10 @@ void AlarmClock::SetColor(int brightness)
     drawRequest = true;
 }
 
-void AlarmClock::Tick()
+boolean AlarmClock::Tick()
 {
     if (!drawRequest) {
-        return;
+        return true;
     }
     drawRequest = false;
 
@@ -75,18 +80,24 @@ void AlarmClock::Tick()
         }
     }
     FastLED.show();
-  }
+    return true;
+}
 
 int AlarmClock::ButtonHandler(Button::Id id, Button::Event event)
 {
-    Serial.println("ButtonHandler");
-    if ((id == Button::Id::MID) && (event == Button::Event::SHORT_PRESS)) {
-        SettingsToggleAlarmActive();
-        drawRequest = true;
-    }
+    if (event == Button::Event::SHORT_PRESS) {
+        switch (id) {
+            case Button::Id::MID:
+                SettingsToggleAlarmActive();
+                drawRequest = true;
+                break;
 
-    if ((id == Button::Id::RIGHT) && (event == Button::Event::SHORT_PRESS)) {
-        return MODE_SET_ALARM_TS;
+            case Button::Id::RIGHT:
+                return MODE_SET_ALARM_TS;
+
+            case Button::Id::LEFT:
+                return MODE_FUN;
+        }
     }
     return MODE_CLOCK;
 }

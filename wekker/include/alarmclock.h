@@ -6,7 +6,8 @@ class AlarmClock : public Display {
 public:
     AlarmClock();
     void init(int brightness, CRGB color);
-    virtual void Tick();
+    virtual void Start();
+    virtual boolean Tick();
     virtual int ButtonHandler(Button::Id id, Button::Event event);
     void SetColor(int brightness);
 

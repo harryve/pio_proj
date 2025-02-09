@@ -2,6 +2,7 @@
 
 #include "alarmclock.h"
 #include "setalarmts.h"
+#include "fun.h"
 #include "hwdefs.h"
 #include "display.h"
 #include "alarm.h"
@@ -21,27 +22,19 @@ static int brightness = 5;
 
 static AlarmClock alarmClock = AlarmClock();
 static SetAlarmTs setAlarmTs = SetAlarmTs();
-static Display *handlers[2] = {&alarmClock, &setAlarmTs};
+static Fun fun = Fun();
+static Display *handlers[3] = {&alarmClock, &setAlarmTs, &fun};
 static int mode = MODE_CLOCK;
 
 Alarm alarmBuzzer = Alarm(BUZZER_PIN);
 
 void ButtonHandler(Button::Id id, Button::Event event)
 {
-    // switch (event) {
-    //     case Button::Event::SHORT_PRESS:    Serial.printf("%d: SP\n", (int)id); break;
-    //     case Button::Event::LONG_PRESS:     Serial.printf("%d: LP\n", (int)id); break;
-    //     case Button::Event::LONG_PRESS_END: Serial.printf("%d: LE\n", (int)id); break;
-    //     default: Serial.printf("%d: ???\n", (int)id); break;
-    // }
-
-    // if (event == Button::Event::SHORT_PRESS && id == Button::Id::LEFT) {
-    //     mode = 1 - mode;
-    //     handlers[mode]->Redraw();
-    // }
-    // else {
-        mode = handlers[mode]->ButtonHandler(id, event);
-    //}
+    int newMode = handlers[mode]->ButtonHandler(id, event);
+    if (mode != newMode) {
+        mode = newMode;
+        handlers[mode]->Start();
+    }
 }
 
 Button button1 = Button(BUTTON_LEFT_PIN, Button::Id::LEFT, ButtonHandler);
@@ -134,20 +127,21 @@ void loop()
     ReadLdr();
 
     if (getLocalTime(&timeinfo)) {
-       if (dispTime != ((timeinfo.tm_hour * 100) + timeinfo.tm_min)) {
+       if (dispTime != ((timeinfo.tm_hour * 60) + timeinfo.tm_min)) {
             uptime++;
             SettingsSetUptime(uptime);
-            dispTime = (timeinfo.tm_hour * 100) + timeinfo.tm_min;
+            dispTime = (timeinfo.tm_hour * 60) + timeinfo.tm_min;
 
-            if ((dispTime == 600) && SettingsGetAlarmActive()) {
+            if (SettingsGetAlarmActive() && (dispTime == SettingsGetWakeupTime())) {
                 alarmBuzzer.trigger();
             }
-            Serial.printf("Time = %d\n", dispTime);
             alarmClock.SetTime(timeinfo.tm_hour, timeinfo.tm_min);
         }
     }
 
-  //alarmClock.Tick();
-  handlers[mode]->Tick();
-  Monitor();
+    if (!handlers[mode]->Tick()) {
+        mode = MODE_CLOCK;
+        handlers[mode]->Start();
+    }
+    Monitor();
 }

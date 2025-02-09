@@ -6,7 +6,8 @@
 class Display {
 public:
     Display();
-    virtual void Tick() = 0;
+    virtual void Start() = 0;
+    virtual boolean Tick() = 0;
     virtual int ButtonHandler(Button::Id id, Button::Event event) = 0;
     void SetBrightness(int brightness);
     void Redraw();
