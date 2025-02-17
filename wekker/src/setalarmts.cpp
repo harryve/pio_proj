@@ -16,6 +16,7 @@ SetAlarmTs::SetAlarmTs()
 
 void SetAlarmTs::Start()
 {
+    drawRequest = true;
     startTime = millis();
 }
 

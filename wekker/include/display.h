@@ -16,7 +16,12 @@ protected:
     void InitLeds();
     void Fill(CRGB color);
     void SetLed(int x, int y, CRGB color);
+    void SetLed(uint16_t idx, CRGB color);
+    CRGB GetLed(uint16_t idx);
+    void Fade(uint8_t fade);
     void DrawDigit(int x, int y, int digit, CRGB color);
+
+    void Rainbow(uint8_t initialhue, uint8_t deltahue);
 
     bool drawRequest;
 };

@@ -7,8 +7,9 @@
 
 #define HTTP_PORT 80
 
-AsyncWebServer server(HTTP_PORT);
-AsyncWebSocket ws("/ws");
+static Button::EventCb buttonCallback = NULL;
+static AsyncWebServer server(HTTP_PORT);
+static AsyncWebSocket ws("/ws");
 
 static const char *GetAlarmToggleStr()
 {
@@ -110,7 +111,14 @@ void notifyClients()
     ws.textAll(jsonBuffer, len);
 }
 
-void handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
+static void SimButtonPress(Button::Id id)
+{
+    if (buttonCallback != NULL) {
+        buttonCallback(id, Button::Event::SHORT_PRESS);
+    }
+}
+
+static void HandleWebSocketMessage(void *arg, uint8_t *data, size_t len)
 {
     AwsFrameInfo *info = (AwsFrameInfo*)arg;
     if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
@@ -125,8 +133,18 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
 
         if (json["action"].is<JsonVariant>()) {
             const char *action = json["action"];
+            Serial.printf("Action = %s\n", action);
             if (strcmp(action, "toggle") == 0) {
                 SettingsToggleAlarmActive();
+            }
+            else if (strcmp(action, "left") == 0) {
+                SimButtonPress(Button::Id::LEFT);
+            }
+            else if (strcmp(action, "select") == 0) {
+                SimButtonPress(Button::Id::MID);
+            }
+            else if (strcmp(action, "right") == 0) {
+                SimButtonPress(Button::Id::RIGHT);
             }
         }
 
@@ -159,7 +177,7 @@ static void OnEvent(AsyncWebSocket       *server,
             Serial.printf("WebSocket client #%u disconnected\n", client->id());
             break;
         case WS_EVT_DATA:
-            handleWebSocketMessage(arg, data, len);
+            HandleWebSocketMessage(arg, data, len);
             break;
         case WS_EVT_PONG:
         case WS_EVT_ERROR:
@@ -167,8 +185,9 @@ static void OnEvent(AsyncWebSocket       *server,
     }
 }
 
-void WebserverInit()
+void WebserverInit(Button::EventCb eventCb)
 {
+
     if (!SPIFFS.begin()) {
         Serial.println("SPIFFS Mount Failed");
         return;
@@ -185,6 +204,7 @@ void WebserverInit()
     server.begin();
 
     SettingsSetChangeCb(notifyClients);
+    buttonCallback = eventCb;
 }
 
 void WebserverTick()

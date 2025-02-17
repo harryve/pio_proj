@@ -54,7 +54,7 @@ void setup()
     alarmClock.init(brightness, CRGB::Red);
 
     NetworkInit();
-    WebserverInit();
+    WebserverInit(ButtonHandler);
 
     // Init and get the time
     configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);

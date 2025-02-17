@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include "settings.h"
 
-//#define USE_PREFS
+#define USE_PREFS
 
 #ifdef USE_PREFS
 #include <Preferences.h>

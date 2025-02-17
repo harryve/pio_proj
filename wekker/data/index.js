@@ -55,8 +55,11 @@ function onMessage(event)
 
 function initButtons()
 {
-    document.getElementById('submit').addEventListener('click', onSubmit);
     document.getElementById('toggle').addEventListener('click', onToggle);
+    document.getElementById('submit').addEventListener('click', onSubmit);
+    document.getElementById('left').addEventListener('click', onLeft);
+    document.getElementById('select').addEventListener('click', onSelect);
+    document.getElementById('right').addEventListener('click', onRight);
 }
 
 function onToggle(event)
@@ -67,6 +70,20 @@ function onToggle(event)
 function onSubmit(event)
 {
     const timeValue = document.getElementById("time").value;
-    //var wakeuptime = document.getElementById('time').innerHTML;
     websocket.send(JSON.stringify({'submit':timeValue}));
+}
+
+function onLeft(event)
+{
+    websocket.send(JSON.stringify({'action':'left'}));
+}
+
+function onSelect(event)
+{
+    websocket.send(JSON.stringify({'action':'select'}));
+}
+
+function onRight(event)
+{
+    websocket.send(JSON.stringify({'action':'right'}));
 }

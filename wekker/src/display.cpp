@@ -7,7 +7,7 @@
 using namespace fl;
 
 // Add extra led position for XY errors
-static CRGB leds[NUM_LEDS + 1];
+static CRGB leds[NUM_LEDS];
 static XYMap xymap(MATRIX_WIDTH, MATRIX_HEIGHT, true);
 
 // 5x8 (from HelvetiPixel.ttf) font for digits
@@ -24,19 +24,6 @@ static const uint8_t digits[10][8] = {
     {0b01110, 0b10001, 0b10001, 0b10001, 0b01111, 0b00001, 0b00001, 0b01110}  // 9
 };
 
-void FillRainbow( struct CRGB * targetArray, int numToFill,
-                  uint8_t initialhue,
-                  uint8_t deltahue )
-{
-    CHSV hsv;
-    hsv.hue = initialhue;
-    hsv.val = 255;
-    hsv.sat = 240;
-    for( int i = 0; i < numToFill; ++i) {
-        targetArray[i] = hsv;
-        hsv.hue += deltahue;
-    }
-}
 
 Display::Display()
 {
@@ -46,14 +33,9 @@ void Display::InitLeds()
 {
     FastLED.addLeds<WS2812B, DATA_PIN, GRB>(leds, NUM_LEDS).setScreenMap(xymap);
     FastLED.setBrightness(50);
-    FillRainbow(leds, NUM_LEDS, 0, 7);
+    Rainbow(0, 7);
     FastLED.show();
 }
-
-//void Display::Tick() // Implemented in derived classes
-//{
-//  Serial.print(".");
-//}
 
 void Display::Redraw()
 {
@@ -78,6 +60,26 @@ void Display::SetLed(int x, int y, CRGB color)
     leds[xymap(x, y)] = color;
 }
 
+void Display::SetLed(uint16_t idx, CRGB color)
+{
+    if (idx < NUM_LEDS) {
+        leds[idx] = color;
+    }
+}
+
+CRGB Display::GetLed(uint16_t idx)
+{
+    if (idx < NUM_LEDS) {
+        return leds[idx];
+    }
+    return CRGB::Black;
+}
+
+void Display::Fade(uint8_t fade)
+{
+  fadeToBlackBy( leds, NUM_LEDS, fade);
+}
+
 void Display::DrawDigit(int x, int y, int digit, CRGB color)
 {
     for (int row = 0; row < 8; row++) {
@@ -86,5 +88,17 @@ void Display::DrawDigit(int x, int y, int digit, CRGB color)
                 SetLed(x + col, y + row, color);
             }
         }
+    }
+}
+
+void Display::Rainbow(uint8_t initialhue, uint8_t deltahue )
+{
+    CHSV hsv;
+    hsv.hue = initialhue;
+    hsv.val = 255;
+    hsv.sat = 240;
+    for (int i = 0; i < NUM_LEDS; ++i) {
+        leds[i] = hsv;
+        hsv.hue += deltahue;
     }
 }

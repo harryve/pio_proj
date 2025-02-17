@@ -21,7 +21,7 @@ void AlarmClock::init(int b, CRGB c)
 
 void AlarmClock::Start()
 {
-
+    drawRequest = true;
 }
 
 void AlarmClock::SetColor(int brightness)

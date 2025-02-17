@@ -1,3 +1,4 @@
 #pragma once
-void WebserverInit();
+#include "button.h"
+void WebserverInit(Button::EventCb eventCb);
 void WebserverTick();
