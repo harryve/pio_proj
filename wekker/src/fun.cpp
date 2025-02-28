@@ -6,8 +6,8 @@
 #include "hwdefs.h"
 
 #define TIMEOUT (300 * 1000)       // ms
-#define CYCLETIME 20
-#define N_PATTERNS 4
+//#define CYCLETIME 20
+#define N_PATTERNS 6
 
 Fun::Fun()
 {
@@ -18,7 +18,7 @@ void Fun::Start()
 {
     startTime = millis();
     cycleTime = startTime;
-    cycle = 0;
+    cycleTimeout = 20;
     hue = 0;
 }
 
@@ -28,18 +28,19 @@ boolean Fun::Tick()
         return false;
     }
 
-    if (millis() - cycleTime < CYCLETIME) {
+    if (millis() - cycleTime < cycleTimeout) {
         return true;
     }
     cycleTime = millis();
-    cycle++;
     hue++;
 
     switch (patternNumber) {
         case 0:
+            cycleTimeout = 20;
             Rainbow(hue, 7);
             break;
         case 1:
+            cycleTimeout = 20;
             Rainbow(hue, 7);
             if (random8() < 80) {
                 /*NUM_LEDS)*/
@@ -48,10 +49,20 @@ boolean Fun::Tick()
             }
             break;
         case 2:
+            cycleTimeout = 20;
             Confetti();
             break;
         case 3:
+            cycleTimeout = 20;
             Sinelon();
+            break;
+        case 4:
+            cycleTimeout = 10;
+            Cylon();
+            break;
+        case 5:
+            cycleTimeout = 100;
+            DigitalRain();
             break;
         default:
             Fill(CRGB::Blue);
@@ -59,41 +70,7 @@ boolean Fun::Tick()
     }
     FastLED.show();
 
-    // if (millis() - cycleTime > CYCLETIME) {
-    //     cycleTime = millis();
-    //     switch(cycle) {
-    //         case 0: Fill(CRGB::Blue);   break;
-    //         case 1: Fill(CRGB::Yellow);   break;
-    //         case 2: Fill(CRGB::Red);   break;
-    //         case 3: Fill(CRGB::Green);   break;
-    //         case 4: Fill(CRGB::Purple);   break;
-    //         case 5: Fill(CRGB::Pink);   break;
-    //         default: FastLED.clear();   break;
-    //     }
-    //     cycle++;
-    //     if (cycle > 6) {
-    //         cycle = 0;
-    //     }
-    //     FastLED.show();
-    // }
     return true;
-}
-
-void Fun::Confetti()
-{
-  // random colored speckles that blink in and fade smoothly
-  Fade(10);
-  int pos = random16(NUM_LEDS);
-  /*GetLed(pos) + */
-  SetLed(pos, CHSV(hue + random8(64), 200, 255));
-}
-
-void Fun::Sinelon()
-{
-  // a colored dot sweeping back and forth, with fading trails
-  Fade(20);
-  int pos = beatsin16( 13, 0, NUM_LEDS-1 );
-  SetLed(pos, /*GetLed(pos) +*/ CHSV(hue, 255, 192));
 }
 
 int Fun::ButtonHandler(Button::Id id, Button::Event event)
@@ -107,4 +84,79 @@ int Fun::ButtonHandler(Button::Id id, Button::Event event)
         return MODE_FUN;
     }
     return MODE_CLOCK;
+}
+
+void Fun::Confetti()
+{
+    // random colored speckles that blink in and fade smoothly
+    Fade(10);
+    int pos = random16(NUM_LEDS);
+    SetLed(pos, CHSV(hue + random8(64), 200, 255));
+}
+
+void Fun::Sinelon()
+{
+    // a colored dot sweeping back and forth, with fading trails
+    Fade(20);
+    int pos = beatsin16( 13, 0, NUM_LEDS-1 );
+    SetLed(pos, CHSV(hue, 255, 192));
+}
+
+
+#define FORWARD		1
+#define BACKWARD 	2
+
+void Fun::Cylon()
+{
+	static int state = FORWARD;
+	static int led = 0;
+
+	SetLed(led, CHSV(hue++, 255, 255));
+	FastLED.show();
+	Fade(20);
+
+	switch (state) {
+		case FORWARD:
+			led++;
+			if (led >= NUM_LEDS) {
+				led = NUM_LEDS - 2;
+				state = BACKWARD;
+			}
+			break;
+		case BACKWARD:
+			led--;
+			if (led == 0) {
+				state = FORWARD;
+			}
+			break;
+		default:
+			break;
+	}
+}
+
+void Fun::DigitalRain()
+{
+	for (int i = 0; i < MATRIX_WIDTH; i++) {
+		ledBuffer[i] = CRGB::Black;
+	}
+
+	if (random8() < 40) {
+		int column = random8(MATRIX_WIDTH);
+		for (int row = 0; row < RAIN_HEIGHT; row++) {
+			int scale = RAIN_HEIGHT - row;
+			ledBuffer[column + row * MATRIX_WIDTH] = CRGB(100 / scale, 127 + 128 / scale, 100 / scale);
+		}
+	}
+
+	ScrollDown();
+
+	for (int i = 0; i < MATRIX_WIDTH; i++) {
+		SetLed(i, ledBuffer[i + MATRIX_WIDTH * (RAIN_HEIGHT - 1)]);
+	}
+
+	for (int y = RAIN_HEIGHT - 1; y > 0; y--) {
+	    for (int x = 0; x < MATRIX_WIDTH; x++) {
+		    ledBuffer[x + y * MATRIX_WIDTH] = ledBuffer[x + (y - 1) * MATRIX_WIDTH];
+	    }
+    }
 }

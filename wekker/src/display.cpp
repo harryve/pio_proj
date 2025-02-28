@@ -80,6 +80,21 @@ void Display::Fade(uint8_t fade)
   fadeToBlackBy( leds, NUM_LEDS, fade);
 }
 
+void Display::ScrollDown()
+{
+	// scroll
+    for (int row = MATRIX_HEIGHT - 1; row > 0; row--) {
+        for (int col = 0; col < MATRIX_WIDTH; col++) {
+            SetLed(xymap(col, row), GetLed(xymap(col, row - 1)));
+        }
+    }
+
+	// Clear first line
+    for (int col = 0; col < MATRIX_WIDTH; col++) {
+        SetLed(col, 0, CRGB::Black);
+    }
+}
+
 void Display::DrawDigit(int x, int y, int digit, CRGB color)
 {
     for (int row = 0; row < 8; row++) {
@@ -97,8 +112,10 @@ void Display::Rainbow(uint8_t initialhue, uint8_t deltahue )
     hsv.hue = initialhue;
     hsv.val = 255;
     hsv.sat = 240;
-    for (int i = 0; i < NUM_LEDS; ++i) {
-        leds[i] = hsv;
-        hsv.hue += deltahue;
+    for (int y = 0; y < MATRIX_HEIGHT; y++) {
+        for (int x = 0; x < MATRIX_WIDTH; x++) {
+            SetLed(x, y, hsv);
+            hsv.hue += deltahue;
+        }
     }
 }

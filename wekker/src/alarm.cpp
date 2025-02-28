@@ -15,70 +15,70 @@
 
 Alarm::Alarm(int pin)
 {
-  buzzerPin = pin;
-  state = IDLE;
-  count = 0;
-  pinMode(buzzerPin, INPUT_PULLDOWN);
+    buzzerPin = pin;
+    state = IDLE;
+    count = 0;
+    pinMode(buzzerPin, INPUT_PULLDOWN);
 }
-    
+
 void Alarm::trigger()
 {
-  state = START;
+    state = START;
 }
 
 bool Alarm::tick(bool &invert)
 {
-  bool redraw = false;
+    bool redraw = false;
 
-  switch (state) {
-    case IDLE:
-      break;
+    switch (state) {
+        case IDLE:
+            break;
 
-    case START:
-      count = ALARM_COUNT;
-      tones = BEEP_COUNT - 1;
-      startTime = millis();
-      tone(buzzerPin, FREQUENCY);
-      Serial.println("BEEP 1st");
-      redraw = true;
-      invert = true;
-      state = ON;
-      break;
+        case START:
+            count = ALARM_COUNT;
+            tones = BEEP_COUNT - 1;
+            startTime = millis();
+            tone(buzzerPin, FREQUENCY);
+            Serial.println("BEEP 1st");
+            redraw = true;
+            invert = true;
+            state = ON;
+            break;
 
-    case ON:
-      if (millis() - startTime < DUTY_TIME) {
-        break;
-      }
-      noTone(buzzerPin);
-      redraw = true;
-      invert = false;
-      if (--count > 0) {
-        state = OFF;
-        startTime = millis();
-      }
-      else {
-        state = IDLE;
-      }
-      break;
+        case ON:
+            if (millis() - startTime < DUTY_TIME) {
+                break;
+            }
+            noTone(buzzerPin);
+            redraw = true;
+            invert = false;
+            if (--count > 0) {
+                state = OFF;
+                startTime = millis();
+            }
+            else {
+                state = IDLE;
+            }
+            break;
 
-    case OFF:
-      if (millis() - startTime < DUTY_TIME) {
-        break;
-      }
-      if (tones > 0) {
-        tone(buzzerPin, FREQUENCY);
-        tones--;
-        Serial.println("BEEP");
-      }
-      redraw = true;
-      invert = true;
-      state = ON;
-      startTime = millis();
-      break;
+        case OFF:
+            if (millis() - startTime < DUTY_TIME) {
+                break;
+            }
+            if (tones > 0) {
+                tone(buzzerPin, FREQUENCY);
+                tones--;
+                Serial.println("BEEP");
+            }
+            redraw = true;
+            invert = true;
+            state = ON;
+            startTime = millis();
+            break;
 
-    default:
-      noTone(buzzerPin);
-      break;
-  }
-  return redraw;
+        default:
+            noTone(buzzerPin);
+            break;
+    }
+    return redraw;
 }
