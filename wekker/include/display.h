@@ -10,6 +10,7 @@ public:
     virtual boolean Tick() = 0;
     virtual int ButtonHandler(Button::Id id, Button::Event event) = 0;
     void SetBrightness(int brightness);
+    void SetMinimumBrightness(int minimum);
     void Redraw();
 
 protected:
@@ -25,4 +26,5 @@ protected:
     void Rainbow(uint8_t initialhue, uint8_t deltahue);
 
     bool drawRequest;
+    int minimumBrightness;
 };

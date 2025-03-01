@@ -20,6 +20,8 @@ void Fun::Start()
     cycleTime = startTime;
     cycleTimeout = 20;
     hue = 0;
+    SetMinimumBrightness(50);
+    SetBrightness(50);
 }
 
 boolean Fun::Tick()

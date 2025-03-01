@@ -17,10 +17,12 @@ void AlarmClock::init(int b, CRGB c)
     InitLeds();
     SetBrightness(b);
     color = c;
+    Start();
 }
 
 void AlarmClock::Start()
 {
+    SetMinimumBrightness(0);
     drawRequest = true;
 }
 

@@ -27,6 +27,7 @@ static const uint8_t digits[10][8] = {
 
 Display::Display()
 {
+    minimumBrightness = 0;
 }
 
 void Display::InitLeds()
@@ -44,8 +45,15 @@ void Display::Redraw()
 
 void Display::SetBrightness(int brightness)
 {
-    FastLED.setBrightness(brightness);
-    Redraw();
+    if (brightness >= minimumBrightness) {
+        FastLED.setBrightness(brightness);
+        Redraw();
+    }
+}
+
+void Display::SetMinimumBrightness(int minimum)
+{
+    minimumBrightness = minimum;
 }
 
 void Display::Fill(CRGB color)

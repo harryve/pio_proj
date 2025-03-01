@@ -44,6 +44,7 @@ function onMessage(event)
     document.getElementById('toggle').innerHTML = data.toggle;
     document.getElementById('alarm_state').innerHTML = data.status;
     document.getElementById('wakeuptime').innerHTML = data.wakeuptime;
+    document.getElementById('timeofday').innerHTML = data.timeofday;
     document.getElementById('uptime').innerHTML = data.uptime;
     document.getElementById('reboot_count').innerHTML = data.reboot_count;
     document.getElementById("time").value = data.wakeuptime;

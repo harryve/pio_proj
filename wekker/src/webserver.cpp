@@ -35,6 +35,21 @@ static char *GetWakupStr()
     return wakeupTimeBuf;
 }
 
+static char *GetTimeOfDayStr()
+{
+    static char timeBuf[16];
+    uint32_t time = SettingsGetTimeOfDay();
+    uint32_t hours, mins;
+
+    hours = time / 60;
+    time -= hours * 60;
+    mins = time;
+
+    snprintf(timeBuf, sizeof(timeBuf), "%d:%02d", hours, mins);
+
+    return timeBuf;
+}
+
 static char *GetUpTimeStr()
 {
     static char upTimeBuf[32];
@@ -81,6 +96,10 @@ String processor(const String &var)
         return String(GetUpTimeStr());
     }
 
+    if (var == "TIMEOFDAY") {
+        return String(GetTimeOfDayStr());
+    }
+
     if (var == "REBOOTCOUNT") {
         return String(GetRebootStr());
     }
@@ -104,6 +123,7 @@ void notifyClients()
     json["toggle"] = GetAlarmToggleStr();
     json["status"] = GetAlarmActiveStr();
     json["wakeuptime"] = GetWakupStr();
+    json["timeofday"] =  GetTimeOfDayStr();
     json["uptime"] =  GetUpTimeStr();
     json["reboot_count"] = GetRebootStr();
     char jsonBuffer[128];

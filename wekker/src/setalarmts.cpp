@@ -18,6 +18,7 @@ void SetAlarmTs::Start()
 {
     drawRequest = true;
     startTime = millis();
+    SetMinimumBrightness(0);
 }
 
 boolean SetAlarmTs::Tick()

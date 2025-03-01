@@ -16,6 +16,7 @@ static uint16_t wakeupTime;
 // End of entries list
 
 static uint32_t uptime;
+static uint32_t timeOfDay;
 
 static void (*changeCb)() = NULL;
 
@@ -85,9 +86,10 @@ void SettingsSetWakeupTime(uint16_t val)
     }
 }
 
-void SettingsSetUptime(uint32_t val)
+void SettingsSetTimes(uint32_t newTimeOfDay, uint32_t newUptime)
 {
-    uptime = val;
+    timeOfDay = newTimeOfDay;
+    uptime = newUptime;
     if (changeCb != NULL) {
         changeCb();
     }
@@ -96,4 +98,9 @@ void SettingsSetUptime(uint32_t val)
 uint32_t SettingsGetUptime()
 {
     return uptime;
+}
+
+uint32_t SettingsGetTimeOfDay()
+{
+    return timeOfDay;
 }

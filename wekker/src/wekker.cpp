@@ -129,8 +129,8 @@ void loop()
     if (getLocalTime(&timeinfo)) {
        if (dispTime != ((timeinfo.tm_hour * 60) + timeinfo.tm_min)) {
             uptime++;
-            SettingsSetUptime(uptime);
             dispTime = (timeinfo.tm_hour * 60) + timeinfo.tm_min;
+            SettingsSetTimes(dispTime, uptime);
 
             if (SettingsGetAlarmActive() && (dispTime == SettingsGetWakeupTime())) {
                 alarmBuzzer.trigger();
