@@ -39,7 +39,6 @@ bool Alarm::tick(bool &invert)
             tones = BEEP_COUNT - 1;
             startTime = millis();
             tone(buzzerPin, FREQUENCY);
-            Serial.println("BEEP 1st");
             redraw = true;
             invert = true;
             state = ON;
@@ -68,7 +67,6 @@ bool Alarm::tick(bool &invert)
             if (tones > 0) {
                 tone(buzzerPin, FREQUENCY);
                 tones--;
-                Serial.println("BEEP");
             }
             redraw = true;
             invert = true;

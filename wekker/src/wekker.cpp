@@ -48,12 +48,12 @@ void setup()
     handlers[MODE_CLOCK] = &alarmClock;
     handlers[MODE_SET_ALARM_TS] = &setAlarmTs;
 
-    SettingsInit();
     LdrInit();
 
     alarmClock.init(brightness, CRGB::Red);
 
     NetworkInit();
+    SettingsInit();
     WebserverInit(ButtonHandler);
 
     // Init and get the time
@@ -97,7 +97,6 @@ static void Monitor()
 {
     char c = Serial.read();
     if (c > 0x20 && c < 0x80) {
-        //Serial.printf("Received [%c]\n", c);
         if (c == 'a') {
             alarmBuzzer.trigger();
         }

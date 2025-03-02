@@ -12,6 +12,7 @@ static Preferences prefs;
 // The entruies stored in NVS
 static bool alarmActive;
 static uint32_t rebootCounter;
+static uint32_t gitRev;
 static uint16_t wakeupTime;
 // End of entries list
 
@@ -25,8 +26,16 @@ void SettingsInit()
 #ifdef USE_PREFS
     prefs.begin("wekker");
 
-    rebootCounter = prefs.getULong("rebootcount", 0);
-    rebootCounter++;
+    gitRev = prefs.getULong("gitrev", 0);
+    if (gitRev != GIT_REV) {
+        gitRev = GIT_REV;
+        prefs.putULong("gitrev", gitRev);
+        rebootCounter = 0;
+    }
+    else {
+        rebootCounter = prefs.getULong("rebootcount", 0);
+        rebootCounter++;
+    }
     prefs.putULong("rebootcount", rebootCounter);
 
     alarmActive = prefs.getBool("alarmactive", false);
@@ -38,6 +47,7 @@ void SettingsInit()
 #endif
 
     Serial.printf("Reboot counter = %ld\n", rebootCounter);
+    Serial.printf("Git rev = 0x%lx\n", gitRev);
     Serial.printf("Alarm active = %d\n", (int)alarmActive);
     Serial.printf("Wakeup time = %d\n", wakeupTime);
 }
@@ -103,4 +113,9 @@ uint32_t SettingsGetUptime()
 uint32_t SettingsGetTimeOfDay()
 {
     return timeOfDay;
+}
+
+uint32_t SettingsGetGitRev()
+{
+    return GIT_REV;
 }

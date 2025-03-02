@@ -13,3 +13,4 @@ void SettingsSetWakeupTime(uint16_t val);
 void SettingsSetTimes(uint32_t timeOfDay, uint32_t uptime);
 uint32_t SettingsGetTimeOfDay();
 uint32_t SettingsGetUptime();
+uint32_t SettingsGetGitRev();

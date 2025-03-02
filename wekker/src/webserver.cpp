@@ -80,7 +80,6 @@ static char *GetRebootStr()
 
 String processor(const String &var)
 {
-    Serial.println(var.c_str());
     if (var == "TOGGLE") {
         return String(GetAlarmToggleStr());
     }
@@ -108,8 +107,7 @@ String processor(const String &var)
 
 void onRootRequest(AsyncWebServerRequest *request)
 {
-  Serial.printf("onRootRequest\n");
-  request->send(SPIFFS, "/index.html", "text/html", false, processor);
+    request->send(SPIFFS, "/index.html", "text/html", false, processor);
 }
 
 void notifyClients()
@@ -153,7 +151,6 @@ static void HandleWebSocketMessage(void *arg, uint8_t *data, size_t len)
 
         if (json["action"].is<JsonVariant>()) {
             const char *action = json["action"];
-            Serial.printf("Action = %s\n", action);
             if (strcmp(action, "toggle") == 0) {
                 SettingsToggleAlarmActive();
             }
@@ -187,8 +184,6 @@ static void OnEvent(AsyncWebSocket       *server,
                     uint8_t              *data,
                     size_t                len)
 {
-
-    Serial.printf("WebSocket onEvent\n");
     switch (type) {
         case WS_EVT_CONNECT:
             Serial.printf("WebSocket client #%u connected from %s\n", client->id(), client->remoteIP().toString().c_str());
@@ -218,7 +213,6 @@ void WebserverInit(Button::EventCb eventCb)
     server.addHandler(&ws);
 
     // Init webserver
-    Serial.printf("initWebServer\n");
     server.on("/", onRootRequest);
     server.serveStatic("/", SPIFFS, "/");
     server.begin();
