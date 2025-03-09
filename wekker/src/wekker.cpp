@@ -15,8 +15,7 @@
 
 static const char* ntpServer = "ntp.harry.thuis";
 //static const char* ntpServer = "pool.ntp.org";
-static const long  gmtOffset_sec = 3600;
-static const int   daylightOffset_sec = 3600;
+static const char* myTimezone = "CET-1CEST,M3.5.0/2,M10.5.0/3";
 
 static int brightness = 5;
 
@@ -57,7 +56,9 @@ void setup()
     WebserverInit(ButtonHandler);
 
     // Init and get the time
-    configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
+    configTime(0, 0, ntpServer);
+    setenv("TZ", myTimezone, 1);
+    tzset();
 
     // Wait for time sync
     struct tm timeinfo;
