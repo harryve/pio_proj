@@ -13,6 +13,7 @@ void TimeSyncInit()
     Serial.println("Start wifi");
 
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    WiFi.mode(WIFI_STA);
     WiFi.hostname("ClockPrototype");
     while (WiFi.status() != WL_CONNECTED) {
         Serial.print(".");
