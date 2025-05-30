@@ -30,6 +30,14 @@ void loop()
     if (currentMillis - previousMillis >= 1000 * 60 * 5) {
         previousMillis = currentMillis;
 
-        NetworkPublish(SensorTemperature(), SensorHumidity(), SensorPressure(), NetworkSignalStrength());
+        float temperature = SensorTemperature();
+        float humidity = SensorHumidity();
+        float pressure= SensorPressure();
+        uint32_t signalStrength = NetworkSignalStrength();
+
+        NetworkPublish(temperature, humidity, pressure, signalStrength);
+        WebServerPublish(temperature, humidity, pressure, signalStrength);
     }
+
+    delay(50);
 }

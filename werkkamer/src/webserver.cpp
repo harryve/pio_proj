@@ -2,6 +2,18 @@
 
 ESP8266WebServer server(80);    // Create a webserver object that listens for HTTP request on port 80
 
+static float temperature, humidity, pressure;
+static uint32_t signalStrength;
+
+void WebServerPublish(float temp, float hum, float pres, uint32_t sigStrength)
+{
+    temperature = temp;
+    humidity = hum;
+    pressure = pres;
+    signalStrength = sigStrength;
+
+}
+
 static void handleRoot()
 {
     //String content = "HTTP/1.1 200 OK\n";
@@ -16,11 +28,22 @@ static void handleRoot()
     //client.println(".button { background-color: #195B6A; border: none; color: white; padding: 16px 40px;");
     //client.println("text-decoration: none; font-size: 30px; margin: 2px; cursor: pointer;}");
     //client.println(".button2 {background-color: #77878A;}</style></head>");
-    static int temp = 123;
     content += "<body><h1>Wemos 4 Web Server</h1>";
-    content += "Temperatuur: ";
-    content += temp++;
-    content += "\n";
+    content += "<p>Temperatuur: ";
+    content += temperature;
+    content += "</p>";
+
+    content += "<p>Vochtigheid: ";
+    content += humidity;
+    content += "</p>";
+
+    content += "<p>Luchtdruk: ";
+    content += pressure;
+    content += "</p>";
+
+    content += "<p>Signaal sterkte: ";
+    content += signalStrength;
+    content += "</p>";
 
     content += "</body></html>";
 
