@@ -8,14 +8,16 @@
 WiFiClient wifiClient;
 MqttClient mqttClient(wifiClient);
 
-#define TOPIC "tele/wemos4/SENSOR"
+#define HOSTNAME    "wemos4"
+#define TOPIC "tele/" HOSTNAME "/SENSOR"
 
 void NetworkInit()
 {
-    Serial.println("Start wifi");
+    Serial.println("Start wifi for " HOSTNAME);
 
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-    WiFi.hostname("wemos4");
+    WiFi.mode(WIFI_STA);
+    WiFi.hostname(HOSTNAME);
     while (WiFi.status() != WL_CONNECTED) {
         Serial.print(".");
         delay(500);
@@ -23,7 +25,7 @@ void NetworkInit()
 
     Serial.println("Connected to wifi network");
 
-    mqttClient.setId("wemos4");
+    mqttClient.setId(HOSTNAME);
     Serial.print("Attempting to connect to the MQTT broker: ");
     if (!mqttClient.connect(MQTT_BROKER, MQTT_PORT)) {
         Serial.print("MQTT connection failed! Error code = ");
@@ -42,6 +44,8 @@ void NetworkLoop()
     if (currentMillis - previousMillis >= 60000) {
         previousMillis = currentMillis;
 
+        Serial.print(currentMillis);
+        Serial.println(" Check network");
         if (WiFi.status() != WL_CONNECTED) {
             Serial.println("Reconnecting to WiFi...");
             mqttClient.stop();
@@ -57,6 +61,7 @@ void NetworkLoop()
             }
         }
     }
+    mqttClient.poll();
 }
 
 int32_t NetworkSignalStrength()
@@ -73,10 +78,20 @@ void NetworkPublish(float temperature, float humidity, float pressure, uint32_t 
     json["BME280"]["Humidity"] = humidity;
     json["BME280"]["Pressure"] = pressure;
     char jsonBuffer[128];
-    size_t len = serializeJson(json, jsonBuffer);
+    serializeJson(json, jsonBuffer);
+    unsigned long currentMillis = millis();
+    Serial.print(currentMillis);
     Serial.println(jsonBuffer);
 
-    mqttClient.beginMessage(TOPIC);
-    mqttClient.print(jsonBuffer);
-    mqttClient.endMessage();
+    if (mqttClient.connected() == 0) {
+        Serial.print(currentMillis);
+        Serial.println("Connection with broker lost");
+    }
+    else {
+        Serial.print(currentMillis);
+        Serial.println("Send message to broker");
+        mqttClient.beginMessage(TOPIC);
+        mqttClient.print(jsonBuffer);
+        mqttClient.endMessage();
+    }
 }

@@ -3,9 +3,9 @@
 ESP8266WebServer server(80);    // Create a webserver object that listens for HTTP request on port 80
 
 static float temperature, humidity, pressure;
-static uint32_t signalStrength;
+static int32_t signalStrength;
 
-void WebServerPublish(float temp, float hum, float pres, uint32_t sigStrength)
+void WebServerPublish(float temp, float hum, float pres, int32_t sigStrength)
 {
     temperature = temp;
     humidity = hum;
@@ -43,6 +43,10 @@ static void handleRoot()
 
     content += "<p>Signaal sterkte: ";
     content += signalStrength;
+    content += "</p>";
+
+    content += "<p>Uptime: ";
+    content += millis() / 1000;
     content += "</p>";
 
     content += "</body></html>";

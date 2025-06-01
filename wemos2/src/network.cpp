@@ -8,15 +8,16 @@
 WiFiClient wifiClient;
 MqttClient mqttClient(wifiClient);
 
-#define TOPIC "tele/wemos2/SENSOR"
+#define HOSTNAME    "wemos2"
+#define TOPIC "tele/" HOSTNAME "/SENSOR"
 
 void NetworkInit()
 {
-    Serial.println("Start wifi");
+    Serial.println("Start wifi for " HOSTNAME);
 
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
     WiFi.mode(WIFI_STA);
-    WiFi.hostname("wemos2");
+    WiFi.hostname(HOSTNAME);
     while (WiFi.status() != WL_CONNECTED) {
         Serial.print(".");
         delay(500);
@@ -24,7 +25,7 @@ void NetworkInit()
 
     Serial.println("Connected to wifi network");
 
-    mqttClient.setId("wemos4");
+    mqttClient.setId(HOSTNAME);
     Serial.print("Attempting to connect to the MQTT broker: ");
     if (!mqttClient.connect(MQTT_BROKER, MQTT_PORT)) {
         Serial.print("MQTT connection failed! Error code = ");
@@ -43,6 +44,8 @@ void NetworkLoop()
     if (currentMillis - previousMillis >= 60000) {
         previousMillis = currentMillis;
 
+        Serial.print(currentMillis);
+        Serial.println(" Check network");
         if (WiFi.status() != WL_CONNECTED) {
             Serial.println("Reconnecting to WiFi...");
             mqttClient.stop();
@@ -58,6 +61,7 @@ void NetworkLoop()
             }
         }
     }
+    mqttClient.poll();
 }
 
 int32_t NetworkSignalStrength()
