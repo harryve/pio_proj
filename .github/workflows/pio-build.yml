@@ -1,0 +1,62 @@
+# .github/workflows/pio-multi.yml
+name: PlatformIO (multi-project)
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 👇 Add your PIO project directories here
+        dir: [werkkamer, wemos2, wekker]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # Cache PIO core + frameworks/toolchains (+ per-project .pio)
+      - name: Cache PlatformIO
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.platformio
+            ${{ matrix.dir }}/.pio
+          key: pio-${{ runner.os }}-${{ matrix.dir }}-${{ hashFiles(format('{0}/platformio.ini', matrix.dir)) }}
+          restore-keys: |
+            pio-${{ runner.os }}-${{ matrix.dir }}-
+
+      - name: Install PlatformIO
+        run: |
+          python -m pip install --upgrade pip
+          pip install platformio
+
+      # Build all envs in this project (omit -e to build all)
+      - name: Build (${{ matrix.dir }})
+        run: pio run -d ${{ matrix.dir }}
+
+      # Optional: run unit tests for a native env if present
+      - name: Test (${{ matrix.dir }})
+        run: pio test -d ${{ matrix.dir }} --without-uploading
+        continue-on-error: false
+
+      # Optional: publish firmware artifacts
+      - name: Upload firmware
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-${{ matrix.dir }}
+          path: |
+            ${{ matrix.dir }}/.pio/build/*/*.{bin,elf,hex,uf2}
+          if-no-files-found: ignore
+
