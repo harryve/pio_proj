@@ -2,7 +2,13 @@
 #include <ArduinoMqttClient.h>
 #include <ArduinoJson.h>
 
-#include "cred.h"
+#if __has_include("cred.h")
+#   include "cred.h"
+#else
+#define WIFI_SSID "wifi"
+#define WIFI_PASSWORD "wachtwoord"
+#endif
+
 #include "network.h"
 
 WiFiClient wifiClient;
