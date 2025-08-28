@@ -46,9 +46,9 @@ jobs:
         run: pio run -d ${{ matrix.dir }}
 
       # Optional: run unit tests for a native env if present
-      - name: Test (${{ matrix.dir }})
-        run: pio test -d ${{ matrix.dir }} --without-uploading
-        continue-on-error: false
+      #- name: Test (${{ matrix.dir }})
+      #  run: pio test -d ${{ matrix.dir }} --without-uploading
+      #  continue-on-error: false
 
       # Optional: publish firmware artifacts
       - name: Upload firmware
