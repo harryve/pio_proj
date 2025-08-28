@@ -7,6 +7,8 @@
 #else
 #define WIFI_SSID "wifi"
 #define WIFI_PASSWORD "wachtwoord"
+#define MQTT_BROKER "broker"
+#define MQTT_PORT 1
 #endif
 
 #include "network.h"
