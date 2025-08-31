@@ -1,15 +1,7 @@
 #include <ESP8266WiFi.h>
 #include <ArduinoMqttClient.h>
 #include <ArduinoJson.h>
-
-#if __has_include("cred.h")
-#   include "cred.h"
-#else
-#define WIFI_SSID "wifi"
-#define WIFI_PASSWORD "wachtwoord"
-#define MQTT_BROKER "broker"
-#define MQTT_PORT 1
-#endif
+#include "cred.h"
 
 #include "network.h"
 

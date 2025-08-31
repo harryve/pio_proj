@@ -14,7 +14,7 @@ jobs:
       fail-fast: false
       matrix:
         # 👇 Add your PIO project directories here
-        dir: [werkkamer, wemos2, wekker]
+        dir: [clock_proto, werkkamer, wemos2, wekker]
 
     steps:
       - name: Checkout

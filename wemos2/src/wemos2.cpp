@@ -6,15 +6,15 @@
 void setup()
 {
     Serial.begin(115200);
-    Serial.println("\n\nStart wemos2 gevalletje");
+    Serial.println("\n\nStart wemos2");
 
     NetworkInit();
     SensorInit();
 
     delay(1000);
     Serial.println("Setup complete");
+    SensorTemperature();        // First measurement after power up fails
 }
-
 
 void loop()
 {
@@ -24,8 +24,11 @@ void loop()
     NetworkLoop();
 
     // Update values every 5 seconds
-    if (currentMillis - previousMillis >= 1000 * 30) {
+    if (currentMillis - previousMillis >= 1000 * 300) {
         previousMillis = currentMillis;
-        NetworkPublish(SensorTemperature(), 0);
+        float temperature = SensorTemperature();
+        if (temperature < 50.0) {
+            NetworkPublish(temperature, 0);
+        }
     }
 }

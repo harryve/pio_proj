@@ -20,7 +20,7 @@ void NetworkInit()
 
     // Connect to Wi-Fi
     WiFi.setHostname("wekker");
-    WiFi.begin(SSID, PASSWORD);
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
     while (timo-- > 0 && WiFi.status() != WL_CONNECTED) {
         delay(500);
         Serial.print(".");
@@ -66,7 +66,7 @@ void NetworkTick()
 
             if (mqttClient.connected() == 0) {
                 networkErrors |= NWK_NO_MQTT;
-                if (!mqttClient.connect(MQTT_BROKER, 1883)) {
+                if (!mqttClient.connect(MQTT_BROKER, MQTT_PORT)) {
                     Serial.print("MQTT connection failed! Error code = ");
                     Serial.println(mqttClient.connectError());
                 }

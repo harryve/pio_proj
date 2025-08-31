@@ -12,8 +12,10 @@
 
 Adafruit_SH1106G display = Adafruit_SH1106G(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
+#define PIR_SENSOR   D7
+
 unsigned long spm;
-static void DisplayTime(unsigned long spm, bool synced)
+static void DisplayTime(unsigned long spm, bool synced, int onTime)
 {
     char buffer[64];
 
@@ -29,7 +31,7 @@ static void DisplayTime(unsigned long spm, bool synced)
 
     display.setTextSize(2);
     display.setCursor(0, 40);
-    snprintf(buffer, sizeof(buffer), "%02d ", s);
+    snprintf(buffer, sizeof(buffer), "%02d", s);
     display.print(buffer);
     if (synced) {
         display.print(" S");
@@ -37,12 +39,14 @@ static void DisplayTime(unsigned long spm, bool synced)
     else {
         display.print(" ?");
     }
+    display.printf(" %d", onTime);
     display.display();
 }
 
 void setup()
 {
     spm = 0;
+    delay(250);
     Serial.begin(115200);
     Serial.println("\n\nStart clock");
 
@@ -51,6 +55,8 @@ void setup()
     display.setContrast (0); // dim display
 
     display.display();
+
+    pinMode(PIR_SENSOR, INPUT);
 
     TimeSyncInit();
 
@@ -65,6 +71,7 @@ void loop()
     static unsigned long syncTimestamp = 0;
     static unsigned long offset = 0;
     static unsigned long lastTime = 0;
+    static int onTime = 9999;
 
     display.clearDisplay();
 
@@ -78,10 +85,17 @@ void loop()
         offset = ((millis() - syncTimestamp) / 1000);
     }
 
-    if (lastTime != spm + offset) {
-        lastTime = spm + offset;
-        DisplayTime(spm + offset, synced);
-        Serial.print("D");
+    if (digitalRead(PIR_SENSOR)) {
+        onTime = 6000;
+    }
+
+    if (onTime > 0) {
+        if (lastTime != spm + offset) {
+            lastTime = spm + offset;
+            DisplayTime(spm + offset, synced, onTime / 10);
+            Serial.print("D");
+        }
+        onTime--;
     }
 
     delay(100);

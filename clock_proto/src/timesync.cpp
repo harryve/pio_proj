@@ -41,7 +41,7 @@ bool TimeSync(unsigned long &spm, bool &synced)
     spmBuf[0] = '\0';
 
     Serial.println("Connect to time server");
-    if (!TCP_client.connect("time.harry.thuis", 1962)) {
+    if (!TCP_client.connect(TIME_SERVER_ADDR, TIME_SERVER_PORT)) {
         Serial.println("Failed");
         isSynced = false;
         synced = isSynced;
