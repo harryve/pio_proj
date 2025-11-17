@@ -23,6 +23,7 @@ static void DisplayTime(unsigned long spm, bool synced, int onTime)
     int m = (spm / 60) % 60;
     int s = spm % 60;
 
+    display.clearDisplay();
     display.setTextSize(4);
     display.setTextColor(SH110X_WHITE);
     display.setCursor(0, 0);
@@ -46,21 +47,21 @@ static void DisplayTime(unsigned long spm, bool synced, int onTime)
 void setup()
 {
     spm = 0;
-    delay(250);
+
+    delay(250); // wait for the OLED to power up
+
     Serial.begin(115200);
     Serial.println("\n\nStart clock");
 
-    delay(250); // wait for the OLED to power up
     display.begin(i2c_Address, true); // Address 0x3C default
     display.setContrast (0); // dim display
-
+    display.clearDisplay();
     display.display();
 
     pinMode(PIR_SENSOR, INPUT);
 
     TimeSyncInit();
 
-    delay(1000);
     Serial.println("Setup complete");
 }
 
@@ -72,8 +73,6 @@ void loop()
     static unsigned long offset = 0;
     static unsigned long lastTime = 0;
     static int onTime = 9999;
-
-    display.clearDisplay();
 
     unsigned long newSpm;
     if (TimeSync(newSpm, synced)) {
@@ -96,6 +95,11 @@ void loop()
             Serial.print("D");
         }
         onTime--;
+        if (onTime == 0) {
+            display.clearDisplay();
+            display.display();
+            Serial.println("Off");
+        }
     }
 
     delay(100);
