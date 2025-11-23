@@ -2,6 +2,7 @@
 #include <cc1101_drv.h>
 #include "blink.h"
 #include "remotecontrol.h"
+#include "network.h"
 
 static CC1101_drv cc1101;
 
@@ -13,6 +14,7 @@ void setup()
     }
     delay(1000);
     Serial.println("Hello world!");
+    NetworkInit();
 
     cc1101.setSpiPin(12, 13, 11, 2);
     if (cc1101.getCC1101()) {         // Check the CC1101 Spi connection.
@@ -35,6 +37,9 @@ void setup()
 
 void loop()
 {
+    NetworkTick();
     Blink();
-    RemoteControlCheck();
+    if (RemoteControlCheck()) {
+        NetworkPublishPressed(1);
+    }
 }

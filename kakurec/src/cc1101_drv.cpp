@@ -99,10 +99,13 @@ void CC1101_drv::Reset (void)
     delay(1);
     digitalWrite(SS_PIN, HIGH);
     delay(1);
+
     digitalWrite(SS_PIN, LOW);
     while(digitalRead(MISO_PIN));
+
     SPI.transfer(CC1101_SRES);
     while(digitalRead(MISO_PIN));
+
     digitalWrite(SS_PIN, HIGH);
 }
 
@@ -534,5 +537,4 @@ void CC1101_drv::SetRx(void)
 {
     SpiStrobe(CC1101_SIDLE);
     SpiStrobe(CC1101_SRX);        //start receive
-    //trxstate=2;
 }
