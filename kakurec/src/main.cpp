@@ -3,6 +3,7 @@
 #include "blink.h"
 #include "remotecontrol.h"
 #include "network.h"
+#include "ble_scan.h"
 
 static CC1101_drv cc1101;
 
@@ -24,6 +25,7 @@ void setup()
         for(;;);
     }
 
+    BleScanSetup();
     cc1101.Init();              // must be set to initialize the cc1101!
     cc1101.setDRate(4.0);
     cc1101.setRxBW(16);
@@ -39,7 +41,8 @@ void loop()
 {
     NetworkTick();
     Blink();
+    BleScanLoop();
     if (RemoteControlCheck()) {
-        NetworkPublishPressed(1);
+        //NetworkPublishPressed(1);
     }
 }
