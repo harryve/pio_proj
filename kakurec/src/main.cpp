@@ -43,6 +43,6 @@ void loop()
     Blink();
     BleScanLoop();
     if (RemoteControlCheck()) {
-        //NetworkPublishPressed(1);
+        NetworkPublishPressed(1);
     }
 }

@@ -1,7 +1,8 @@
 #include <Arduino.h>
 #include <ArduinoMqttClient.h>
+#include <ArduinoJson.h>
 #include <WiFi.h>
-#include <esp_sntp.h>
+//#include <esp_sntp.h>
 
 #include <time.h>
 #include "cred.h"
@@ -21,6 +22,7 @@ void NetworkInit()
     // Connect to Wi-Fi
     WiFi.setHostname("kakurec");
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    
     while (timo-- > 0 && WiFi.status() != WL_CONNECTED) {
         delay(500);
         Serial.print(".");
@@ -55,11 +57,16 @@ void NetworkTick()
         previousMillis = currentMillis;
 
         if (WiFi.status() != WL_CONNECTED) {
-            Serial.println("Reconnecting to WiFi...");
+            Serial.print("Reconnecting to WiFi...");
             networkErrors |= (NWK_NO_WIFI | NWK_NO_MQTT);
             mqttClient.stop();
             WiFi.disconnect();
-            WiFi.reconnect();
+            if (WiFi.reconnect()) {
+                Serial.println("failed");
+            }
+            else {
+                Serial.println("Ok!");
+            }
         }
         else {
             networkErrors &= ~NWK_NO_WIFI;
@@ -95,5 +102,27 @@ static void Publish(const char *pTopic, int val)
 
 void NetworkPublishPressed(int val)
 {
-    Publish("stat/kaku/button", val);
+    Publish("test/stat/kaku/button", val);
 }
+
+void NetworkPublishBadkamer(float temperature, float humidity, float pressure, float vbat, uint32_t runTime, uint32_t seqNr)
+{
+    JsonDocument json;
+    json["Temperature"] = temperature;
+    json["Humidity"] = humidity;
+    json["Pressure"] = pressure;
+    json["Vbat"] = vbat;
+    json["Runtime"] = runTime;
+    json["Seqnr"] = seqNr;
+    char jsonBuffer[128];
+    serializeJson(json, jsonBuffer);
+
+    unsigned long currentMillis = millis();
+    Serial.print(currentMillis);
+    Serial.println(jsonBuffer);
+
+    mqttClient.beginMessage("kak");
+    mqttClient.print(jsonBuffer);
+    mqttClient.endMessage();
+}
+

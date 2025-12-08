@@ -2,14 +2,16 @@
 #include <BLEDevice.h>
 #include <BLEScan.h>
 #include <BLEAdvertisedDevice.h>
+#include "network.h"
+#include "ble_scan.h"
 
 #define COMPANY_ID 0x4845       // 16-bit company ID = "HE"
-#define SCAN_TIME  2               // active scan time in seconds
+#define SCAN_TIME  1               // active scan time in seconds
 
 static uint32_t msgCount;
 static BLEScan *pBLEScan;
 
-static uint16_t msg[5];
+static uint16_t msg[7];
 
 class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks
 {
@@ -46,18 +48,25 @@ void BleScanSetup()
 
 void BleScanLoop()
 {
+    static uint32_t lastSeqNr = 0;
+
     // Perform scan
     msgCount = 0;
-    //Serial.println("Scanning...");
     BLEScanResults results = pBLEScan->start(SCAN_TIME, false);
-    //Serial.print("Scan done. Found devices: ");
-    //Serial.println(results.getCount());
-    //Serial.printf("Received %u messages\n", msgCount);
     if (msgCount > 0) {
-        Serial.printf("Msg: %x %x %x %x %x\n", msg[0], msg[1], msg[2], msg[3], msg[4]);
+        Serial.printf("Msg: %x", msg[0]);
+        float t = (msg[1] / 10.0) - 273.15;
+        float h = (msg[2] / 10.0);
+        float p = (msg[3] / 10.0);
+        float v = (msg[4] / 10.0);
+        Serial.printf(" t=%.1f, h=%.1f, p=%.1f, v=%.1f", t, h, p, v);
+        Serial.printf(" runtime=%d, boot count=%d\n", msg[5], msg[6]);
+        uint32_t seqNr = msg[6];
+        if (lastSeqNr != seqNr) {
+            NetworkPublishBadkamer(t, h, p, v, msg[5], seqNr);
+            lastSeqNr = seqNr;
+        }
     }
     // Clear results to free memory and immediately re-scan
     pBLEScan->clearResults();
-
-  //delay(1000); // short pause between scans
 }

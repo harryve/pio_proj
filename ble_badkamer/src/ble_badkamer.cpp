@@ -30,7 +30,7 @@ RTC_DATA_ATTR uint32_t lastRuntime = 0;
 
 BLEAdvertising *advertising;
 
-// Prepare manufacturer data buffer: 6 bytes (T,H,P)
+// Prepare manufacturer data buffer
 void fillManufacturerData(uint16_t *buf, float t, float h, float p, float v)
 {
     // "temp": float("%0.1f" % temp),

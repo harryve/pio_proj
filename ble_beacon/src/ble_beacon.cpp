@@ -18,21 +18,25 @@
 #define DEVICE_NAME         "BadkamerSensor"
 #define COMPANY_ID          0x4845       // 16-bit company ID = "HE"
 #define ADVERTISE_MS        1000         // Advertise perios in ms
-#define WAKE_INTERVAL_S     30           // Wakeup time in s
+#define WAKE_INTERVAL_S     1 //30           // Wakeup time in s
 
 #define BRIGHTNESS 16
 
 RTC_DATA_ATTR uint16_t bootCount = 0;
+RTC_DATA_ATTR uint32_t lastRuntime = 0;
 
 BLEAdvertising *advertising;
 
-// Prepare manufacturer data buffer: 6 bytes (T,H,P)
-void fillManufacturerData(uint16_t *buf)
+// Prepare manufacturer data buffer
+void fillManufacturerData(uint16_t *buf, float t, float h, float p, float v)
 {
-    buf[0] = 0xdead;
-    buf[1] = 0xbeef;
-    buf[2] = 0x55AC;
-    buf[3] = bootCount;
+    buf[0] = COMPANY_ID;
+    buf[1] = (uint32_t)round((t + 273.15) * 10.0);
+    buf[2] = (uint32_t)round(h * 10.0);
+    buf[3] = (uint32_t)round(p * 10.0);
+    buf[4] = (uint32_t)round(v * 10.0);
+    buf[5] = lastRuntime;
+    buf[6] = bootCount;
 }
 
 void deepSleepNow(uint32_t seconds)
@@ -43,22 +47,13 @@ void deepSleepNow(uint32_t seconds)
 
 void setup()
 {
+    uint32_t runStart = millis();
+
     bootCount++;
     neopixelWrite(RGB_BUILTIN, 0, 0, BRIGHTNESS);
     Serial.begin(115200);
     //delay(1500);
 
-  // ---- BME280 INIT ----
-//  if (!bme.begin(0x76)) {
-//    Serial.println("BME280 not found!");
-//    deepSleepNow(WAKE_INTERVAL_S);
-//  }
-
-    // float t = bme.readTemperature();               // °C
-    // float h = bme.readHumidity();                  // %
-    // float p = bme.readPressure() / 100.0F;         // hPa
-
-    // Serial.printf("T=%.2f H=%.2f P=%.2f\n", t, h, p);
 
     // ---- BLE Advertising-Only ----
     BLEDevice::init(DEVICE_NAME);
@@ -66,11 +61,8 @@ void setup()
     advertising = BLEDevice::getAdvertising();
     advertising->setScanResponse(false);
 
-    // Manufacturer data buffer (company ID + 6 bytes payload)
-    uint16_t mfgData[1 + 4];
-    mfgData[0] = COMPANY_ID;
-
-    fillManufacturerData(&mfgData[1]);
+    uint16_t mfgData[7];
+    fillManufacturerData(mfgData, 19.3, 63.2, 1010.3, 3.7);
 
     BLEAdvertisementData advData;
     advData.setManufacturerData(std::string((char*)mfgData, sizeof(mfgData)));
@@ -87,15 +79,17 @@ void setup()
 
     neopixelWrite(RGB_BUILTIN, 0, 0, 0);
     Serial.println("Sleeping...");
-    deepSleepNow(WAKE_INTERVAL_S);
+    lastRuntime = millis() - runStart;
+    //deepSleepNow(WAKE_INTERVAL_S);
 }
 
 void loop()
 {
-    for(;;) {
+    for(int wait = 0; wait < 30; wait++) {
         neopixelWrite(RGB_BUILTIN, 10, 0, 0);
         delay(10);
         neopixelWrite(RGB_BUILTIN, 0, 0, 0);
         delay(1000);
     }
+    deepSleepNow(WAKE_INTERVAL_S);
 }
