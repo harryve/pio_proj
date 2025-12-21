@@ -46,17 +46,13 @@ static void DataHandler()
     static unsigned long prevMicros;
 
     if (interruptCount < TRACE_LEN) {
-        // int state = digitalRead(SERIAL_DATA_PIN);
-        // if (state == 1) {
-        //     intAnalyze[interruptCount].state = state;
-            if (interruptCount == 0) {
-                intAnalyze[interruptCount].micros = 0;
-            }
-            else {
-                intAnalyze[interruptCount].micros = micros() - prevMicros;
-            }
-            interruptCount++;
-//        }
+        if (interruptCount == 0) {
+            intAnalyze[interruptCount].micros = 0;
+        }
+        else {
+            intAnalyze[interruptCount].micros = micros() - prevMicros;
+        }
+        interruptCount++;
     }
     prevMicros = micros();
 }
@@ -99,7 +95,7 @@ static bool Decode()
                     state = HANDLE_1_BIT;
                 }
                 else {
-                    Serial.printf("Invalid bit length of first part of bit = %d, length = %u\n", bit, intAnalyze[i].micros);
+                    //Serial.printf("Invalid bit length of first part of bit = %d, length = %u\n", bit, intAnalyze[i].micros);
                     state = IDLE;
                     break;
                 }
@@ -143,7 +139,6 @@ static bool Decode()
             if (pattern == EXPECTED_CODE) {
                 found_remote_control++;
                 if (found_remote_control > MIN_CODE_COUNT) {
-                    Serial.printf("Ruft\n", pattern);
                     return true;
                 }
             }
@@ -163,7 +158,7 @@ bool RemoteControlCheck()
     if (currentMillis - prevMillis > 100) {
         prevMillis = currentMillis;
         if (prevCount != interruptCount) {
-            Serial.println(interruptCount);
+            //Serial.println(interruptCount);
             prevCount = interruptCount;
         }
         else {

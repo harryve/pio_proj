@@ -38,7 +38,7 @@ void BleScanSetup()
 {
     Serial.println("Starting ESP32 BLE client/scanner...");
 
-    BLEDevice::init("Harry_client");
+    BLEDevice::init("Blerk");
     pBLEScan = BLEDevice::getScan();
     pBLEScan->setAdvertisedDeviceCallbacks(new MyAdvertisedDeviceCallbacks());
     pBLEScan->setInterval(100);  // scan interval
@@ -54,13 +54,13 @@ void BleScanLoop()
     msgCount = 0;
     BLEScanResults results = pBLEScan->start(SCAN_TIME, false);
     if (msgCount > 0) {
-        Serial.printf("Msg: %x", msg[0]);
+        //Serial.printf("Msg: %x", msg[0]);
         float t = (msg[1] / 10.0) - 273.15;
         float h = (msg[2] / 10.0);
         float p = (msg[3] / 10.0);
         float v = (msg[4] / 10.0);
-        Serial.printf(" t=%.1f, h=%.1f, p=%.1f, v=%.1f", t, h, p, v);
-        Serial.printf(" runtime=%d, boot count=%d\n", msg[5], msg[6]);
+        //Serial.printf(" t=%.1f, h=%.1f, p=%.1f, v=%.1f", t, h, p, v);
+        //Serial.printf(" runtime=%d, boot count=%d\n", msg[5], msg[6]);
         uint32_t seqNr = msg[6];
         if (lastSeqNr != seqNr) {
             NetworkPublishBadkamer(t, h, p, v, msg[5], seqNr);

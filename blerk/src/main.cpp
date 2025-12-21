@@ -10,7 +10,7 @@ static CC1101_drv cc1101;
 void setup()
 {
     Serial.begin(115200);
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 5; i++) {
         if (Serial) {
             Serial.printf("i = %d\n", i);
             break;
@@ -21,7 +21,7 @@ void setup()
         delay(950);
     }
 
-    Serial.println("Hello world!");
+    Serial.println("Blerk started");
     NetworkInit();
 
     cc1101.setSpiPin(12, 13, 11, 2);
@@ -29,7 +29,12 @@ void setup()
         Serial.println("Found CC1101 module");
     } else {
         Serial.println("ERROR: CC1101 module not found");
-        for(;;);
+        for(;;) {
+            neopixelWrite(RGB_BUILTIN, 10, 0, 0);
+            delay(50);
+            neopixelWrite(RGB_BUILTIN, 0, 0, 0);
+            delay(250);
+        }
     }
 
     BleScanSetup();
@@ -50,6 +55,7 @@ void loop()
     Blink();
     BleScanLoop();
     if (RemoteControlCheck()) {
+        Serial.println("Ruft");
         NetworkPublishPressed(1);
     }
 }

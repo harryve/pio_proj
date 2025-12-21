@@ -25,6 +25,7 @@ Er kan nog een hoop verbeterd worden aan deze code, maar het werkt nu...
 #define   READ_BURST        0xC0            //read burst
 #define   BYTES_IN_RXFIFO   0x7F            //byte number in RXfifo
 
+// Deze variabelen moeten verdwijnen, zijn nergens goed voor.
 byte modulation = 2;
 byte frend0;
 byte SCK_PIN;

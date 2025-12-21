@@ -2,7 +2,6 @@
 #include <ArduinoMqttClient.h>
 #include <ArduinoJson.h>
 #include <WiFi.h>
-//#include <esp_sntp.h>
 
 #include <time.h>
 #include "cred.h"
@@ -20,7 +19,7 @@ void NetworkInit()
     networkErrors = 0;
 
     // Connect to Wi-Fi
-    WiFi.setHostname("kakurec");
+    WiFi.setHostname("blerk");
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
     
     while (timo-- > 0 && WiFi.status() != WL_CONNECTED) {
@@ -35,7 +34,7 @@ void NetworkInit()
     }
     Serial.println("Connected to WiFi");
 
-    mqttClient.setId("kakurec");
+    mqttClient.setId("blerk");
     Serial.print("Attempting to connect to the MQTT broker: ");
     if (!mqttClient.connect(MQTT_BROKER, 1883)) {
         Serial.print("MQTT connection failed! Error code = ");
@@ -89,20 +88,14 @@ void NetworkTick()
     mqttClient.poll();
 }
 
-static void Publish(const char *pTopic, int val)
+void NetworkPublishPressed(int val)
 {
     char buf[16];
 
-    mqttClient.beginMessage(pTopic);
+    mqttClient.beginMessage("blerk/button");
     buf[snprintf(buf, sizeof(buf) - 1, "%d", val)] = '\0';
     mqttClient.print(buf);
     mqttClient.endMessage();
-    Serial.printf("%s %d\n", pTopic, val);
-}
-
-void NetworkPublishPressed(int val)
-{
-    Publish("test/stat/kaku/button", val);
 }
 
 void NetworkPublishBadkamer(float temperature, float humidity, float pressure, float vbat, uint32_t runTime, uint32_t seqNr)
@@ -118,10 +111,10 @@ void NetworkPublishBadkamer(float temperature, float humidity, float pressure, f
     serializeJson(json, jsonBuffer);
 
     unsigned long currentMillis = millis();
-    Serial.print(currentMillis);
-    Serial.println(jsonBuffer);
+    //Serial.print(currentMillis);
+    //Serial.println(jsonBuffer);
 
-    mqttClient.beginMessage("kak");
+    mqttClient.beginMessage("blerk/sensor1");
     mqttClient.print(jsonBuffer);
     mqttClient.endMessage();
 }
