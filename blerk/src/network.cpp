@@ -97,7 +97,7 @@ static void Publish(const char *pTopic, int val)
     buf[snprintf(buf, sizeof(buf) - 1, "%d", val)] = '\0';
     mqttClient.print(buf);
     mqttClient.endMessage();
-
+    Serial.printf("%s %d\n", pTopic, val);
 }
 
 void NetworkPublishPressed(int val)

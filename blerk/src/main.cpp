@@ -10,10 +10,17 @@ static CC1101_drv cc1101;
 void setup()
 {
     Serial.begin(115200);
-    while (!Serial) {
-        ;
+    for (int i = 0; i < 10; i++) {
+        if (Serial) {
+            Serial.printf("i = %d\n", i);
+            break;
+        }
+        neopixelWrite(RGB_BUILTIN, 5, 5, 5);
+        delay(50);
+        neopixelWrite(RGB_BUILTIN, 0, 0, 0);
+        delay(950);
     }
-    delay(1000);
+
     Serial.println("Hello world!");
     NetworkInit();
 

@@ -160,7 +160,7 @@ bool RemoteControlCheck()
     bool res = false;
 
     unsigned long currentMillis = millis();
-    if (currentMillis - prevMillis > 500) {
+    if (currentMillis - prevMillis > 100) {
         prevMillis = currentMillis;
         if (prevCount != interruptCount) {
             Serial.println(interruptCount);
