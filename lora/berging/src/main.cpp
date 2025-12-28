@@ -2,26 +2,21 @@
 #include <Wire.h>
 #include <LoRa.h>
 #include <AM2315C.h>
-#include "loramsg.h"
 #include "hwdefs.h"
-
-RTC_DATA_ATTR int counter = 0;
-RTC_DATA_ATTR uint32_t runtime = 0;
-
-AM2315C sensor;
-
-#include <U8g2lib.h>
-U8G2_SSD1306_128X64_NONAME_F_HW_I2C *u8g2 = nullptr;
 #include "display.h"
+#include "loramsg.h"
+#include "log.h"
+
+static RTC_DATA_ATTR int counter = 0;
+static RTC_DATA_ATTR uint32_t runtime = 0;
+
+static AM2315C sensor;
 
 void GoToSleep()
 {
     Serial.println("Going to sleep");
 
-    if (u8g2) {
-        u8g2->sleepOn();
-    }
-    LoRa.sleep();
+    DisplaySleep();
 
     pinMode(RADIO_CS_PIN, INPUT);
     pinMode(RADIO_RST_PIN, INPUT);
@@ -49,10 +44,9 @@ void GoToSleep()
 void setup()
 {
     Serial.begin(115200);
-    Serial.println("initBoard....");
+    LOG("Start LoRa sensor " __DATE__ ", " __TIME__ "\n");
     SPI.begin(RADIO_SCLK_PIN, RADIO_MISO_PIN, RADIO_MOSI_PIN);
     Wire.begin(I2C_SDA, I2C_SCL, 100000);
-
 
     sensor.begin();
 
@@ -62,13 +56,9 @@ void setup()
         DisplayInit();
     }
 
-    // When the power is turned on, a delay is required.
-    //delay(1000);
-
-    Serial.println("LoRa Sender " __DATE__ ", " __TIME__);
     LoRa.setPins(RADIO_CS_PIN, RADIO_RST_PIN, RADIO_DIO0_PIN);
     if (!LoRa.begin(LoRa_frequency)) {
-        Serial.println("Starting LoRa failed!");
+        LOG("Starting LoRa failed!\n");
         while (1);
     }
 }
@@ -79,58 +69,37 @@ void loop()
     float temp, hum, vbat;
 
     vbat = analogReadMilliVolts(ADC_PIN) * 2.0 / 1000.0;
-    Serial.println("Voltage = " + String(vbat));
+    LOG("Voltage = %.3f\n", vbat);
 
-    if ((status = sensor.read()) == AM2315C_OK) {
-        temp = sensor.getTemperature();
-        hum = sensor.getHumidity();
-    }
-    else {
+    if ((status = sensor.read()) != AM2315C_OK) {
         temp = 0.0;
         hum = 0.0;
-        Serial.print("AM2315C read error: ");
-        Serial.println(status);
+        LOG("AM2315C read error: %d\n", status);
     }
+    else {
+        temp = sensor.getTemperature();
+        hum = sensor.getHumidity();
 
-    Serial.print("Hum = ");
-    Serial.print(hum, 1);
-    Serial.print("%, temperature = ");
-    Serial.print(temp, 1);
-    Serial.println(" C");
+        LOG("Hum = %.0f%, temperature = %.1f C\n", hum, temp);
 
-    Serial.print("Sending packet: ");
-    Serial.println(counter);
+        LOG("Sending packet: %d\n", counter);
+        struct LoraMsg loraMsg;
+        loraMsg.id = 0x48764531;              // HvE1
+        loraMsg.seq = counter;
+        loraMsg.temperature = round(temp*10); // Tenths degeree Celcius
+        loraMsg.humidity = round(hum);        // %
+        loraMsg.vbat = round(vbat* 1000.0);   // mv
+        loraMsg.runtime = (uint16_t)runtime;
+        loraMsg.illuminance = 0;
 
-    // send packet
-    struct LoraMsg loraMsg;
-    loraMsg.id = 0x48764531;              // HvE1
-    loraMsg.seq = counter;
-    loraMsg.temperature = round(temp*10); // Tenths degeree Celcius
-    loraMsg.humidity = round(hum);        // %
-    loraMsg.vbat = round(vbat* 1000.0);   // mv
-    loraMsg.runtime = (uint16_t)runtime;
-    loraMsg.illuminance = 0;
+        LoRa.enableCrc();
+        LoRa.beginPacket();
+        LoRa.write((const uint8_t *)&loraMsg, sizeof(loraMsg));
+        LoRa.endPacket();
 
-    LoRa.enableCrc();
-    LoRa.beginPacket();
-    LoRa.write((const uint8_t *)&loraMsg, sizeof(loraMsg));
-    //LoRa.print("T=");
-    //LoRa.print(temp);
-    //LoRa.print(",  c=");
-    //LoRa.print(counter);
-    LoRa.endPacket();
-
-    if (u8g2) {
-        char buf[256];
-        u8g2->clearBuffer();
-        u8g2->drawStr(0, 12, "Transmitting: OK!");
-        snprintf(buf, sizeof(buf), "T=%.1f,  RV=%.0f", temp, hum);
-        u8g2->drawStr(0, 30, buf);
-        u8g2->sendBuffer();
-        delay(5000);
+        DisplayShowMeasurement(temp, hum);
     }
 
     counter++;
-
     GoToSleep();
 }
