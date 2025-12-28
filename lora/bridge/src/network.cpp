@@ -5,10 +5,12 @@
 
 #include <time.h>
 #include "cred.h"
+#include "log.h"
 #include "network.h"
 
-static const char topic1[]  = "tele/lorasensor/sensor";
-static const char topic2[]  = "tele/lorasensor2/sensor";
+static const char hostName[] = "LoRaBridge";
+static const char topic1[]   = "tele/lorasensor/sensor";
+static const char topic2[]   = "tele/lorasensor2/sensor";
 
 static WiFiClient wifiClient;
 static MqttClient mqttClient(wifiClient);
@@ -18,29 +20,26 @@ void NetworkInit()
     int timo = 20;
 
     // Connect to Wi-Fi
-    WiFi.setHostname("LoRaBridge");
+    WiFi.setHostname(hostName);
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
     while (timo-- > 0 && WiFi.status() != WL_CONNECTED) {
         delay(500);
-        Serial.print(".");
+        LOG(".");
     }
-    Serial.println("\n");
+    LOG("\n");
     if (WiFi.status() != WL_CONNECTED) {
-        Serial.println("Cannot connect to WiFi");
+        LOG("Cannot connect to WiFi\n");
         return;
     }
-    Serial.println("Connected to WiFi");
+    LOG("Connected to WiFi\n");
 
-    mqttClient.setId("LoRaBridge");
-    Serial.print("Attempting to connect to the MQTT broker: ");
+    mqttClient.setId(hostName);
     if (!mqttClient.connect(MQTT_BROKER, 1883)) {
-        Serial.print("MQTT connection failed! Error code = ");
-        Serial.println(mqttClient.connectError());
+       LOG("MQTT connection failed! Error code = %d\n", mqttClient.connectError());
     }
     else {
-        Serial.println("Connected to the MQTT broker!");
-        Serial.println();
+        LOG("Connected to the MQTT broker\n");
     }
 }
 
@@ -53,25 +52,23 @@ void NetworkTick()
         previousMillis = currentMillis;
 
         if (WiFi.status() != WL_CONNECTED) {
-            Serial.print("Reconnecting to WiFi...");
+            LOG("Reconnecting to WiFi...");
             mqttClient.stop();
             WiFi.disconnect();
             if (WiFi.reconnect()) {
-                Serial.println("failed");
+                LOG("failed\n");
             }
             else {
-                Serial.println("Ok!");
+                LOG("Ok!\n");
             }
         }
         else {
-
             if (mqttClient.connected() == 0) {
                 if (!mqttClient.connect(MQTT_BROKER, MQTT_PORT)) {
-                    Serial.print("MQTT connection failed! Error code = ");
-                    Serial.println(mqttClient.connectError());
+                    LOG("MQTT connection failed! Error code = %d\n", mqttClient.connectError());
                 }
                 else {
-                    Serial.println("Reconnected to the MQTT broker!");
+                    LOG("Reconnected\n");
                 }
             }
         }

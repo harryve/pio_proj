@@ -3,6 +3,7 @@
 #include <Wire.h>
 #include "hwdefs.h"
 #include "loramsg.h"
+#include "log.h"
 #include "display.h"
 
 static U8G2_SSD1306_128X64_NONAME_F_HW_I2C *u8g2 = nullptr;
@@ -13,7 +14,7 @@ void DisplayInit()
 
     Wire.beginTransmission(0x3C);
     if (Wire.endTransmission() == 0) {
-        Serial.println("Started OLED");
+        LOG("Started OLED\n");
         u8g2 = new U8G2_SSD1306_128X64_NONAME_F_HW_I2C(U8G2_R0, U8X8_PIN_NONE);
         u8g2->begin();
         u8g2->clearBuffer();
@@ -52,5 +53,7 @@ void DisplayLoraMsg(LoraMsg *ploraMsg, int rssi)
 
 void DisplayOff()
 {
-    u8g2->sleepOn();
+    if (u8g2) {
+        u8g2->sleepOn();
+    }
 }

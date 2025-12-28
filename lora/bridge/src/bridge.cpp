@@ -1,32 +1,30 @@
 //Board: TTGO LoRa32-OLED
 
-//#include <math.h>
 #include <Arduino.h>
 #include <LoRa.h>
 
 #include "network.h"
 #include "hwdefs.h"
 #include "loramsg.h"
+#include "log.h"
 
 #include "display.h"
 
 void setup()
 {
     Serial.begin(115200);
-    Serial.println("initBoard....");
+    LOG("\n\n\nLoRa Bridge " __DATE__ ", " __TIME__ "\n");
+
     SPI.begin(RADIO_SCLK_PIN, RADIO_MISO_PIN, RADIO_MOSI_PIN);
 
     pinMode(BOARD_LED, OUTPUT);
     digitalWrite(BOARD_LED, LED_ON);
-
     DisplayInit();
-
     NetworkInit();
 
-    Serial.println("LoRa Bridge " __DATE__ ", " __TIME__);
     LoRa.setPins(RADIO_CS_PIN, RADIO_RST_PIN, RADIO_DIO0_PIN);
     if (!LoRa.begin(LoRa_frequency)) {
-        Serial.println("Starting LoRa failed!");
+        LOG("Starting LoRa failed!\n");
         while (1);
     }
     LoRa.enableCrc();
@@ -42,7 +40,7 @@ int check_sensor(uint32_t id)
             return 2;
 
         default:
-            Serial.printf("Wrong sensor ID: %x\n", id);
+            LOG("Wrong sensor ID: %x\n", id);
             break;
     }
     return 0;
@@ -51,12 +49,11 @@ int check_sensor(uint32_t id)
 void loop()
 {
     static unsigned long previousMillis = millis();
-    struct LoraMsg loraMsg;
     static uint32_t dispOn;
+    struct LoraMsg loraMsg;
     int sensor;
     unsigned long currentMillis = millis();
 
-    // if WiFi is down, try reconnecting
     NetworkTick();
 
     // Wait for packet
@@ -71,13 +68,13 @@ void loop()
         float snr = LoRa.packetSnr();
 
         if ((sensor = check_sensor(loraMsg.id)) > 0) {
-            Serial.printf("Sensor      = %d\n", sensor);
-            Serial.printf("Counter     = %d\n", loraMsg.seq);
-            Serial.printf("Temperature = %d\n", loraMsg.temperature);
-            Serial.printf("Humidity    = %d\n", loraMsg.humidity);        // %
-            Serial.printf("Vbat        = %d\n", loraMsg.vbat);   // mv
-            Serial.printf("runtime     = %d\n", loraMsg.runtime);   // ms
-            Serial.printf("illuminance = %d\n", loraMsg.illuminance);
+            LOG("Sensor      = %d\n", sensor);
+            LOG("Counter     = %d\n", loraMsg.seq);
+            LOG("Temperature = %d\n", loraMsg.temperature);
+            LOG("Humidity    = %d\n", loraMsg.humidity);  // %
+            LOG("Vbat        = %d\n", loraMsg.vbat);      // mv
+            LOG("runtime     = %d\n", loraMsg.runtime);   // ms
+            LOG("illuminance = %d\n", loraMsg.illuminance);
 
             DisplayLoraMsg(&loraMsg, rssi);
             digitalWrite(BOARD_LED, LED_ON);

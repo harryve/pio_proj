@@ -29,4 +29,3 @@
 
 #define ADC_PIN                     35
 
-#define USE_DISPLAY
