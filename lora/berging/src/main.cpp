@@ -43,10 +43,12 @@ void GoToSleep()
 
 void setup()
 {
+#ifdef SHOW_LOG
     Serial.begin(115200);
+#endif
     LOG("Start LoRa sensor " __DATE__ ", " __TIME__ "\n");
     SPI.begin(RADIO_SCLK_PIN, RADIO_MISO_PIN, RADIO_MOSI_PIN);
-    Wire.begin(I2C_SDA, I2C_SCL, 100000);
+    Wire.begin(I2C_SDA, I2C_SCL);
 
     sensor.begin();
 
