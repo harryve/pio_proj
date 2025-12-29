@@ -12,9 +12,12 @@ jobs:
       matrix:
         project:
           # 👇 Replace these with the folders that contain a platformio.ini
-          - projects/project-a
-          - projects/project-b
-          - firmware/sensor-node
+          - ble_beacon
+          - ble_badkamer
+          - blerk
+          - wekker
+          - clock_proto
+          - wemos2
 
     steps:
       - uses: actions/checkout@v4
