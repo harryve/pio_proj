@@ -18,6 +18,10 @@ jobs:
           - wekker
           - clock_proto
           - wemos2
+          - werkkamer
+          - lora/balkon
+          - lora/berging
+          - lora/bridge
 
     steps:
       - uses: actions/checkout@v4
