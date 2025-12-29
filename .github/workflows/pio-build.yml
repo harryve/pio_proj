@@ -1,4 +1,4 @@
-name: PlatformIO Build
+name: PlatformIO Build (multi-project)
 
 on:
   push:
@@ -7,12 +7,19 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    strategy:
+      fail-fast: false
+      matrix:
+        project:
+          # 👇 Replace these with the folders that contain a platformio.ini
+          - projects/project-a
+          - projects/project-b
+          - firmware/sensor-node
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.x"
 
@@ -20,13 +27,12 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.platformio
-          key: ${{ runner.os }}-pio-${{ hashFiles('**/platformio.ini') }}
+          key: ${{ runner.os }}-pio-${{ hashFiles(format('{0}/platformio.ini', matrix.project)) }}
           restore-keys: |
             ${{ runner.os }}-pio-
 
       - name: Install PlatformIO
         run: pip install --upgrade platformio
 
-      - name: Build (all environments)
-        run: pio run
-
+      - name: Build
+        run: pio run -d "${{ matrix.project }}"
