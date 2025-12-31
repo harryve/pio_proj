@@ -23,3 +23,8 @@
 #define DIO1      GPIO_NUM_14
 #define RST_LoRa  GPIO_NUM_12
 #define BUSY_LoRa GPIO_NUM_13
+
+#define I2C_SDA                     33
+#define I2C_SCL                     34
+#define CHARGE_ADC          GPIO_NUM_3
+
