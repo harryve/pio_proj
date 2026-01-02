@@ -12,7 +12,7 @@ void setup()
     Serial.begin(115200);
     for (int i = 0; i < 5; i++) {
         if (Serial) {
-            Serial.printf("i = %d\n", i);
+            Serial.printf("Waitin for serial port i = %d\n", i);
             break;
         }
         neopixelWrite(RGB_BUILTIN, 5, 5, 5);
@@ -20,14 +20,15 @@ void setup()
         neopixelWrite(RGB_BUILTIN, 0, 0, 0);
         delay(950);
     }
+    Serial.printf("Starting Blerk " __DATE__ ", " __TIME__ "\n");
 
-    Serial.println("Blerk started");
     NetworkInit();
 
     cc1101.setSpiPin(12, 13, 11, 2);
     if (cc1101.getCC1101()) {         // Check the CC1101 Spi connection.
         Serial.println("Found CC1101 module");
-    } else {
+    }
+    else {
         Serial.println("ERROR: CC1101 module not found");
         for(;;) {
             neopixelWrite(RGB_BUILTIN, 10, 0, 0);
