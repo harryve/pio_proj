@@ -1,22 +1,17 @@
-/*
- * ESP32 + BME280 BLE Advertising Beacon (Deep Sleep)
- * - No connection required (advertising-only)
- * - Very low power
- * - Encodes T/H/P in manufacturer data
- */
-
 #include <Arduino.h>
 #include <BLEDevice.h>
 #include <BLEAdvertising.h>
 #include <Adafruit_BME280.h>
 #include <esp_sleep.h>
+#include "log.h"
 
 #define LED_ON  LOW
 #define LED_OFF HIGH
 
-static Adafruit_BME280 bme;
-
-//#define SEALEVELPRESSURE_HPA (1013.25)
+#define SENSOR_VCC_PIN  32
+#define SDA_PIN         21
+#define SCL_PIN         22
+#define ADC_PIN         35
 
 #define DEVICE_NAME         "BadkamerSensor"
 #define COMPANY_ID          0x4845       // 16-bit company ID = "HE"
@@ -26,29 +21,34 @@ static Adafruit_BME280 bme;
 RTC_DATA_ATTR uint16_t bootCount = 0;
 RTC_DATA_ATTR uint32_t lastRuntime = 0;
 
-BLEAdvertising *advertising;
+static Adafruit_BME280 bme;
+static BLEAdvertising *advertising;
 
-static void fillManufacturerData(uint16_t *buf, float t, float h, float p, float v)
+static void FillManufacturerData(uint16_t *buf, float t, float h, float p, float v)
 {
     // Manufacturer data buffer (company ID + payload)
     buf[0] = COMPANY_ID;
-    buf[1] = (uint32_t)round((t + 273) * 10.0);
-    buf[2] = (uint32_t)round(h * 10.0);
-    buf[3] = (uint32_t)round(p * 10.0);
-    buf[4] = (uint32_t)round(v * 10.0);
+    buf[1] = (uint16_t)round((t + 100) * 10.0);
+    buf[2] = (uint16_t)round(h * 10.0);
+    buf[3] = (uint16_t)round(p * 10.0);
+    buf[4] = (uint16_t)round(v * 1000.0);   // mv
     buf[5] = lastRuntime;
     buf[6] = bootCount;
 }
 
 static float ReadVbat()
 {
-//    analogSetAttenuation(ADC_11db);
-    uint32_t mvbat = analogReadMilliVolts(35);
+    analogSetAttenuation(ADC_11db);
+    uint32_t mvbat = analogReadMilliVolts(ADC_PIN);
     return (mvbat * 2.0) / 1000.0;
 }
 
-static void deepSleepNow(uint32_t seconds)
+static void DeepSleepNow(uint32_t seconds)
 {
+    pinMode(ADC_PIN, INPUT);
+    pinMode(SDA_PIN, INPUT);
+    pinMode(SCL_PIN, INPUT);
+    pinMode(SENSOR_VCC_PIN, INPUT);
     esp_sleep_enable_timer_wakeup((uint64_t)seconds * 1000000ULL);
     esp_deep_sleep_start();
 }
@@ -60,12 +60,23 @@ void setup()
 
     bootCount++;
 
+#ifdef SHOW_LOG
     Serial.begin(115200);
+#endif
+
+    LOG("Start badkamer sensor " __DATE__ ", " __TIME__ ", at %ld\n", millis());
+    // Switch on sensor
+    pinMode(SENSOR_VCC_PIN, OUTPUT);
+    digitalWrite(SENSOR_VCC_PIN, HIGH);
+
+    // Give sensor time to start, use BLE init as delay
+    LOG("BLE Advertising init %ld\n", millis());
+    BLEDevice::init("");
 
     // ---- BME280 INIT ----
+    LOG("BME start %ld\n", millis());
     if (!bme.begin(0x76)) {
-        Serial.println("BME280 not found!");
-        //deepSleepNow(WAKE_INTERVAL_S);
+        LOG("BME280 not found!\n");
         t = h = p = 0.0;
     }
     else {
@@ -73,46 +84,42 @@ void setup()
         h = bme.readHumidity();                  // %
         p = bme.readPressure() / 100.0;          // hPa
 
-        Serial.printf("T=%.1f H=%.1f P=%.1f\n", t, h, p);
+        LOG("T=%.1f H=%.1f P=%.1f (%ld)\n", t, h, p, millis());
     }
-    //uint32_t t1 = millis() - runStart;
+    digitalWrite(SENSOR_VCC_PIN, LOW);
+
     float vbat = ReadVbat();
-    Serial.printf("Vbat=%.2f\n", vbat);
+    LOG("Vbat=%.2f\n", vbat);
 
-    // ---- BLE Advertising-Only ----
-    BLEDevice::init(DEVICE_NAME);
-    //uint32_t t2 = millis() - runStart;
-
+    LOG("Get advertising %ld\n", millis());
     advertising = BLEDevice::getAdvertising();
     advertising->setScanResponse(false);
 
     uint16_t mfgData[7];
-    fillManufacturerData(mfgData, t, h, p, vbat);
+    FillManufacturerData(mfgData, t, h, p, vbat);
 
     BLEAdvertisementData advData;
     advData.setManufacturerData(std::string((char*)mfgData, sizeof(mfgData)));
     advertising->setAdvertisementData(advData);
+    //advData.setName(DEVICE_NAME);
+    advData.setShortName(DEVICE_NAME);
 
-    //uint32_t t3 = millis() - runStart;
+    LOG("Start advertising %ld\n", millis());
     BLEDevice::startAdvertising();
-    Serial.print(bootCount);
-    Serial.println(" Advertising...");
 
-    //uint32_t t4 = millis() - runStart;
     delay(ADVERTISE_MS);      // Let beacon run for short window
-    //uint32_t t5 = millis() - runStart;
 
     BLEDevice::stopAdvertising();
     BLEDevice::deinit(true);
-    //uint32_t t6 = millis() - runStart;
 
-    //digitalWrite(LED_BUILTIN, LED_OFF);
-    //Serial.printf("%d %d %d %d %d %d\n", t1, t2, t3, t4, t5, t6);
-    Serial.println("Sleeping...");
+    LOG("Stop advertising %ld\n", millis());
+
+    LOG("Sleeping...\n\n");
     lastRuntime = millis() - runStart;
-    deepSleepNow(WAKE_INTERVAL_S);
+    DeepSleepNow(WAKE_INTERVAL_S);
 }
 
 void loop()
 {
+    // We slapen al...
 }
