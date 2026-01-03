@@ -36,10 +36,13 @@ void bsp::DeepSleep(int seconds)
     // Turn off external power
     SensorSupply(false);
 
-    pinMode(DIO1, INPUT);
-    pinMode(RST_LoRa, INPUT);
-    pinMode(BUSY_LoRa, INPUT);
-    pinMode(SS, INPUT);
+    // Radio
+    pinMode(LORA_DIO1, INPUT);
+    pinMode(LORA_RST, INPUT);
+    pinMode(LORA_BUSY, INPUT);
+
+    // SPI
+    pinMode(NSS, INPUT);
     pinMode(MISO, INPUT);
     pinMode(MOSI, INPUT);
     pinMode(SCK, INPUT);

@@ -16,7 +16,7 @@ static RTC_DATA_ATTR int counter = 0;
 static RTC_DATA_ATTR uint32_t runtime = 0;
 static RTC_DATA_ATTR uint32_t errors = 0;
 
-static SX1262 radio = new Module(SS, DIO1, RST_LoRa, BUSY_LoRa);
+static SX1262 radio = new Module(NSS, LORA_DIO1, LORA_RST, LORA_BUSY);
 static AM2315C thSensor;
 static BH1750 lightMeter;
 
