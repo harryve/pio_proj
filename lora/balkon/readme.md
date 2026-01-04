@@ -7,3 +7,5 @@ PSRAM 0 MB<br>
 Flash 8 MB
 
 Zie doc folder voor meer info
+
+Deepsleep stroom: 14 uA.

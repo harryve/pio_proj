@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
+set -e
 
 for proj in $( find . -name platformio.ini | sort )
 do
     echo $(dirname $proj)
-    pio run -s -d $(dirname $proj)
+    pio run -d $(dirname $proj)
 done
 

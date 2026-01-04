@@ -16,6 +16,8 @@ void GoToSleep()
 {
     Serial.println("Going to sleep");
 
+    LoRa.sleep();
+
     DisplaySleep();
 
     pinMode(RADIO_CS_PIN, INPUT);
@@ -29,10 +31,6 @@ void GoToSleep()
     pinMode(RADIO_SCLK_PIN, INPUT);
     pinMode(RADIO_MISO_PIN, INPUT);
     pinMode(RADIO_MOSI_PIN, INPUT);
-    pinMode(SDCARD_MOSI, INPUT);
-    pinMode(SDCARD_MISO, INPUT);
-    pinMode(SDCARD_SCLK, INPUT);
-    pinMode(SDCARD_CS, INPUT);
     pinMode(BOARD_LED, INPUT);
     pinMode(ADC_PIN, INPUT);
 

@@ -2,7 +2,7 @@
 
 Draait op LilyGO TTGO T3 LoRa32 868MHz V1.6.1 ESP32.
 
-Specificaties:
+# Specificaties:
 
 - Voedingsspanning: 3.3V DC of 5V DC
 - GPIO Spanning: 3.3V*
@@ -21,21 +21,24 @@ Specificaties:
 - Batterij connector: 2p Molex Picoblade
 - Afmetingen PCB: 64.5 x 27.0 mm
 
-BOARD PINS
--
-| Name        | Pin|
-|-------------|----|
-| OLED SDA    | 21 |
-| OLED SCL    | 22 |
-|             |    |
-| LORA MOSI   | 27 |
-| LORA MISO   | 19 |
-| LORA SCLK   |  5 |
-| LORA CS     | 18 |
-| LORA RST    | 23 |
-| LORA DIO0   | 26 |
-|             |    |
-| SDCard CS   | 13 |
-| SDCard MOSI | 15 |
-| SDCard MISO |  2 |
-| SDCard SCLK | 14 |
+## BOARD PINS
+
+| Name         | Pin|
+|--------------|----|
+| LORA MOSI    | 27 |
+| LORA MISO    | 19 |
+| LORA SCLK    |  5 |
+| LORA CS      | 18 |
+| LORA RST     | 23 |
+| LORA DIO0    | 26 |
+| LORA DIO1    | 33 |
+| LORA DIO2    | 32 |
+|              |    |
+| Battery ADC  | 35 |
+| On Board LED | 25 |
+|              |    |
+| SDCard CS    | 13 |
+| SDCard MOSI  | 15 |
+| SDCard MISO  |  2 |
+| SDCard SCLK  | 14 |
+
