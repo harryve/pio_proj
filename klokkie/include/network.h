@@ -3,8 +3,8 @@
 void NetworkInit();
 void NetworkTick();
 
-//void NetworkPublishLdr(int val);
-//void NetworkPublishBrightness(int val);
+void PublishState(bool present, bool timeSynced);
+void PublishSensor(float temperature, float humidity, float pressure);
 
 #define NWK_NO_WIFI 0x01
 #define NWK_NO_MQTT 0x02

@@ -75,20 +75,22 @@ void setup()
 
     TimeSyncInit();
 
-    Serial.println("Setup complete");
+    LOG("Setup complete\n");
 }
 
 #define SENSOR_READ_INTERVAL    10000   // In milli seconds
 #define SENSOR_PUBLISH_INTERVAL ((5 * 60 * 1000) / SENSOR_READ_INTERVAL)
 #define LOOP_DELAY              100
-#define ON_TIME                 ((2 * 60 * 1000) / LOOP_DELAY)     // Minutes * seconds in millis / LOOP_DELAY
+#define ON_TIME                 ((3 * 60 * 1000) / LOOP_DELAY)     // Minutes * seconds in millis / LOOP_DELAY
+#define STATE_PUBLISH_INTERVAL  (5 * 60 * 1000)
 
 void loop()
 {
-    static int onTime = ON_TIME;
+    static int onTime = 0;
     static int dispSec;
     static unsigned long sensorReadTime;
-    static int publishCountDown = SENSOR_PUBLISH_INTERVAL;
+    static unsigned long statePublishTime;
+    static int publishCountDown = 0;
 
     static float temperature, humidity, pressure;
     tm timeinfo;
@@ -96,6 +98,10 @@ void loop()
     NetworkTick();
 
     if (digitalRead(PIR_SENSOR)) {
+        if (onTime == 0) {
+            statePublishTime = millis();
+            PublishState(true, TimeIsSynced());
+        }
         onTime = ON_TIME;
     }
 
@@ -106,6 +112,7 @@ void loop()
         pressure    = bme.readPressure() / 100.0;          // hPa
         if (--publishCountDown <= 0) {
             publishCountDown = SENSOR_PUBLISH_INTERVAL;
+            PublishSensor(temperature, humidity, pressure);
             LOG("T=%.1f H=%.1f P=%.1f\n", temperature, humidity, pressure);
         }
     }
@@ -120,9 +127,17 @@ void loop()
         }
         onTime--;
         if (onTime == 0) {
+            statePublishTime = millis();
+            PublishState(false, TimeIsSynced());
             display.clearDisplay();
             display.display();
-            Serial.println("Off");
+            LOG("Off\n");
+        }
+    }
+    else {
+        if (millis() - statePublishTime > STATE_PUBLISH_INTERVAL) {
+            PublishState(false, TimeIsSynced());
+            statePublishTime = millis();
         }
     }
 
