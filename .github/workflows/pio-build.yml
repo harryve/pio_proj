@@ -11,17 +11,16 @@ jobs:
       fail-fast: false
       matrix:
         project:
-          # 👇 Replace these with the folders that contain a platformio.ini
-          - ble_beacon
           - ble_badkamer
+          - ble_beacon
           - blerk
-          - wekker
-          - clock_proto
-          - wemos2
-          - werkkamer
+          - klokkie
           - lora/balkon
           - lora/berging
           - lora/bridge
+          - wekker
+          - wemos2
+          - werkkamer
 
     steps:
       - uses: actions/checkout@v4
