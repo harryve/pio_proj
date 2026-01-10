@@ -83,8 +83,8 @@ void NetworkTick()
 void PublishState(bool present, bool timeSynced)
 {
     JsonDocument json;
-    json["Present"] = present; // ? 1 : 0;
-    json["TimeSynced"] = timeSynced; // ? 1 : 0;
+    json["Present"] = present ? 1 : 0;
+    json["TimeSynced"] = timeSynced ? 1 : 0;
     char jsonBuffer[128];
     serializeJson(json, jsonBuffer);
 

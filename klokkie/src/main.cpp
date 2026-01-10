@@ -40,6 +40,12 @@ static void DisplayTime(int hour, int min, int sec, bool synced, float temperatu
     display.display();
 }
 
+static float OneDecimal(float raw)
+{
+    int val = (int)round(raw * 10.0);
+    return (float)val / 10.0;
+}
+
 void setup()
 {
     delay(250); // wait for the OLED to power up
@@ -75,6 +81,8 @@ void setup()
 
     TimeSyncInit();
 
+    display.clearDisplay();
+    display.display();
     LOG("Setup complete\n");
 }
 
@@ -107,9 +115,9 @@ void loop()
 
     if (millis() - sensorReadTime > SENSOR_READ_INTERVAL) {
         sensorReadTime = millis();
-        temperature = bme.readTemperature();               // °C
-        humidity    = bme.readHumidity();                  // %
-        pressure    = bme.readPressure() / 100.0;          // hPa
+        temperature = OneDecimal(bme.readTemperature());               // °C
+        humidity    = OneDecimal(bme.readHumidity());                  // %
+        pressure    = OneDecimal(bme.readPressure() / 100.0);          // hPa
         if (--publishCountDown <= 0) {
             publishCountDown = SENSOR_PUBLISH_INTERVAL;
             PublishSensor(temperature, humidity, pressure);
