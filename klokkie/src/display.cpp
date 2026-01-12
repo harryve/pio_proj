@@ -1,4 +1,7 @@
 #include <Arduino.h>
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SH110X.h>
 #include "display.h"
 
 #define I2C_ADDRESS 0x3c  // SH1106 I2C address
@@ -7,51 +10,55 @@
 #define SCREEN_HEIGHT 64  // OLED display height, in pixels
 #define OLED_RESET -1     // QT-PY / XIAO
 
+static Adafruit_SH1106G driver(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
 Display::Display()
 {
-    pDriver = new Adafruit_SH1106G(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+}
 
-    pDriver->begin(I2C_ADDRESS, true);    // Address 0x3C default
-    pDriver->setContrast (0);             // dim display
-    pDriver->clearDisplay();
-    pDriver->setTextSize(3);
-    pDriver->setTextColor(SH110X_WHITE);
-    pDriver->setCursor(0, 0);
-    pDriver->print("Klokkie");
-    pDriver->setTextSize(1);
-    pDriver->setCursor(0, 40);
-    pDriver->print(__DATE__);
-    pDriver->setCursor(0, 50);
-    pDriver->print(__TIME__);
-    pDriver->display();
+void Display::Init()
+{
+    driver.begin(I2C_ADDRESS, true);    // Address 0x3C default
+    driver.setContrast (0);             // dim display
+    driver.clearDisplay();
+    driver.setTextSize(3);
+    driver.setTextColor(SH110X_WHITE);
+    driver.setCursor(0, 0);
+    driver.print("Klokkie");
+    driver.setTextSize(1);
+    driver.setCursor(0, 40);
+    driver.print(__DATE__);
+    driver.setCursor(0, 50);
+    driver.print(__TIME__);
+    driver.display();
 }
 
 void Display::Off()
 {
-    pDriver->clearDisplay();
-    pDriver->display();
+    driver.clearDisplay();
+    driver.display();
 }
 
 void Display::Show(int dispTimePercentage, bool synced)
 {
-    pDriver->clearDisplay();
-    pDriver->setTextSize(4);
-    pDriver->setTextColor(SH110X_WHITE);
-    pDriver->setCursor(0, 0);
-    pDriver->printf("%2d:%02d", hour, minute);
+    driver.clearDisplay();
+    driver.setTextSize(4);
+    driver.setTextColor(SH110X_WHITE);
+    driver.setCursor(0, 0);
+    driver.printf("%2d:%02d", hour, minute);
 
-    pDriver->drawFastHLine(0, 37, (SCREEN_WIDTH * dispTimePercentage) / 100, SH110X_WHITE);
+    driver.drawFastHLine(0, 37, (SCREEN_WIDTH * dispTimePercentage) / 100, SH110X_WHITE);
 
-    pDriver->setTextSize(2);
-    pDriver->setCursor(0, 43);
+    driver.setTextSize(2);
+    driver.setCursor(0, 43);
     if (synced) {
-        pDriver->printf("%02d", second);
+        driver.printf("%02d", second);
     }
     else {
-        pDriver->print("??");
+        driver.print("??");
     }
-    pDriver->printf("  %.1f", temperature);
-    pDriver->display();
+    driver.printf("  %.1f", temperature);
+    driver.display();
 }
 
 void Display::SetTime(int hour, int minute, int second)

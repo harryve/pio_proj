@@ -1,7 +1,4 @@
 #include <Arduino.h>
-// #include <Wire.h>
-// #include <Adafruit_GFX.h>
-// #include <Adafruit_SH110X.h>
 #include <Adafruit_BME280.h>
 #include "display.h"
 #include "timesync.h"
@@ -13,9 +10,8 @@
 #define LED_ON      LOW
 #define LED_OFF     HIGH
 
-
 static Adafruit_BME280 bme;
-static Display *pDisplay;
+static Display display;
 
 static float OneDecimal(float raw)
 {
@@ -32,8 +28,7 @@ void setup()
 
     Serial.begin(115200);
     LOG("\n\nStart klokkie " __DATE__ ", " __TIME__ "\n");
-    pDisplay = new Display();
-
+    display.Init();
     delay(2000); // Time to read display
 
     NetworkInit();
@@ -48,7 +43,7 @@ void setup()
 
     TimeSyncInit();
 
-    pDisplay->Off();
+    display.Off();
     LOG("Setup complete\n");
     digitalWrite(LED_BUILTIN, LED_OFF);
 }
@@ -85,7 +80,7 @@ void loop()
         float temperature = OneDecimal(bme.readTemperature());               // °C
         float humidity    = OneDecimal(bme.readHumidity());                  // %
         float pressure    = OneDecimal(bme.readPressure() / 100.0);          // hPa
-        pDisplay->SetTemperature(temperature);
+        display.SetTemperature(temperature);
         if (--publishCountDown <= 0) {
             publishCountDown = SENSOR_PUBLISH_INTERVAL;
             PublishSensor(temperature, humidity, pressure);
@@ -98,15 +93,15 @@ void loop()
             if (dispSec != timeinfo.tm_sec) {
                 dispSec = timeinfo.tm_sec;
                 //LOG("Ontime = %d, perc = %d\n", onTime, (onTime * 100) / ON_TIME);
-                pDisplay->SetTime(timeinfo.tm_hour, timeinfo.tm_min, dispSec);
-                pDisplay->Show((onTime * 100) / ON_TIME, TimeIsSynced());
+                display.SetTime(timeinfo.tm_hour, timeinfo.tm_min, dispSec);
+                display.Show((onTime * 100) / ON_TIME, TimeIsSynced());
             }
         }
         onTime--;
         if (onTime == 0) {
             statePublishTime = millis();
             PublishState(false, TimeIsSynced());
-            pDisplay->Off();
+            display.Off();
             digitalWrite(LED_BUILTIN, LED_OFF);
             LOG("Off\n");
         }
