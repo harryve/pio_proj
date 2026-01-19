@@ -14,11 +14,14 @@ static AM2315C sensor;
 
 void GoToSleep()
 {
-    Serial.println("Going to sleep");
+    LOG("Going to sleep\n");
 
     LoRa.sleep();
 
     DisplaySleep();
+
+    digitalWrite(SENSOR_VCC, LOW);    // Switch off sensor
+    pinMode(SENSOR_VCC, INPUT);
 
     pinMode(RADIO_CS_PIN, INPUT);
     pinMode(RADIO_RST_PIN, INPUT);
@@ -27,7 +30,7 @@ void GoToSleep()
     pinMode(I2C_SDA, INPUT);
     pinMode(I2C_SDA, INPUT);
     pinMode(I2C_SCL, INPUT);
-    pinMode(OLED_RST, INPUT);
+
     pinMode(RADIO_SCLK_PIN, INPUT);
     pinMode(RADIO_MISO_PIN, INPUT);
     pinMode(RADIO_MOSI_PIN, INPUT);
@@ -39,12 +42,22 @@ void GoToSleep()
     esp_deep_sleep_start();
 }
 
+void LowPowerDelayMs(int ms)
+{
+    esp_sleep_enable_timer_wakeup((int64_t)ms * 1000);
+    esp_light_sleep_start();
+}
+
 void setup()
 {
-#ifdef SHOW_LOG
-    Serial.begin(115200);
-#endif
-    LOG("Start LoRa sensor " __DATE__ ", " __TIME__ "\n");
+    LOG_BEGIN;
+    LOG("\n\nStart LoRa sensor " __DATE__ ", " __TIME__ "\n");
+    pinMode(SENSOR_VCC, OUTPUT);
+    digitalWrite(SENSOR_VCC, HIGH);    // Switch on sensor
+
+    // Delay 200 ms, make sure the sensor is powered up completely
+    LowPowerDelayMs(200);
+
     SPI.begin(RADIO_SCLK_PIN, RADIO_MISO_PIN, RADIO_MOSI_PIN);
     Wire.begin(I2C_SDA, I2C_SCL);
 

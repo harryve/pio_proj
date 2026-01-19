@@ -2,6 +2,8 @@
 
 Draait op LilyGO TTGO T3 LoRa32 868MHz V1.6.1 ESP32.
 
+Deepsleep stroom  is 500 uA.
+
 # Specificaties:
 
 - Voedingsspanning: 3.3V DC of 5V DC

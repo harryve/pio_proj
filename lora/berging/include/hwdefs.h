@@ -27,3 +27,5 @@
 #define LED_ON                      HIGH
 
 #define ADC_PIN                     35
+
+#define SENSOR_VCC                   14
