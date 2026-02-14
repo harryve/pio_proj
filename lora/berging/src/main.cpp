@@ -12,7 +12,7 @@ static RTC_DATA_ATTR uint32_t runtime = 0;
 
 static AM2315C sensor;
 
-void GoToSleep()
+static void GoToSleep()
 {
     LOG("Going to sleep\n");
 
@@ -42,19 +42,37 @@ void GoToSleep()
     esp_deep_sleep_start();
 }
 
-void LowPowerDelayMs(int ms)
+static void LowPowerDelayMs(int ms)
 {
     esp_sleep_enable_timer_wakeup((int64_t)ms * 1000);
     esp_light_sleep_start();
+}
+
+static void LoraSendMsg(float temp, float hum, float vbat)
+{
+    LOG("Sending packet: %d\n", counter);
+    struct LoraMsg loraMsg;
+    loraMsg.id = 0x48764531;              // HvE1
+    loraMsg.seq = counter;
+    loraMsg.temperature = round(temp*10); // Tenths degeree Celcius
+    loraMsg.humidity = round(hum);        // %
+    loraMsg.vbat = round(vbat* 1000.0);   // mv
+    loraMsg.runtime = (uint16_t)runtime;
+    loraMsg.illuminance = 0;
+
+    LoRa.enableCrc();
+    LoRa.beginPacket();
+    LoRa.write((const uint8_t *)&loraMsg, sizeof(loraMsg));
+    LoRa.endPacket();
 }
 
 void setup()
 {
     LOG_BEGIN;
     LOG("\n\nStart LoRa sensor " __DATE__ ", " __TIME__ "\n");
+
     pinMode(SENSOR_VCC, OUTPUT);
     digitalWrite(SENSOR_VCC, HIGH);    // Switch on sensor
-
     // Delay 200 ms, make sure the sensor is powered up completely
     LowPowerDelayMs(200);
 
@@ -92,24 +110,8 @@ void loop()
     else {
         temp = sensor.getTemperature();
         hum = sensor.getHumidity();
-
         LOG("Hum = %.0f%, temperature = %.1f C\n", hum, temp);
-
-        LOG("Sending packet: %d\n", counter);
-        struct LoraMsg loraMsg;
-        loraMsg.id = 0x48764531;              // HvE1
-        loraMsg.seq = counter;
-        loraMsg.temperature = round(temp*10); // Tenths degeree Celcius
-        loraMsg.humidity = round(hum);        // %
-        loraMsg.vbat = round(vbat* 1000.0);   // mv
-        loraMsg.runtime = (uint16_t)runtime;
-        loraMsg.illuminance = 0;
-
-        LoRa.enableCrc();
-        LoRa.beginPacket();
-        LoRa.write((const uint8_t *)&loraMsg, sizeof(loraMsg));
-        LoRa.endPacket();
-
+        LoraSendMsg(temp, hum, vbat);
         DisplayShowMeasurement(temp, hum);
     }
 
