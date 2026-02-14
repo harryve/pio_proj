@@ -6,13 +6,13 @@
 #include "ble_scan.h"
 
 static CC1101_drv cc1101;
+static bool error = false;
 
 void setup()
 {
     Serial.begin(115200);
     for (int i = 0; i < 5; i++) {
         if (Serial) {
-            Serial.printf("Waitin for serial port i = %d\n", i);
             break;
         }
         neopixelWrite(RGB_BUILTIN, 5, 5, 5);
@@ -27,25 +27,26 @@ void setup()
     cc1101.setSpiPin(12, 13, 11, 2);
     if (cc1101.getCC1101()) {         // Check the CC1101 Spi connection.
         Serial.println("Found CC1101 module");
+        cc1101.Init();              // must be set to initialize the cc1101!
+        cc1101.setDRate(4.0);
+        cc1101.setRxBW(16);
+        cc1101.setCCMode(0);
+        cc1101.setModulation(2);  // set modulation mode, 2 = ASK/OOK
+        cc1101.setMHZ(433.92);
+        cc1101.SetRx();
     }
     else {
         Serial.println("ERROR: CC1101 module not found");
-        for(;;) {
-            neopixelWrite(RGB_BUILTIN, 10, 0, 0);
+        for(int i = 0; i < 10; i++) {
+            neopixelWrite(RGB_BUILTIN, 0, 10 * i, 0);
             delay(50);
             neopixelWrite(RGB_BUILTIN, 0, 0, 0);
             delay(250);
         }
+        error = true;
     }
 
     BleScanSetup();
-    cc1101.Init();              // must be set to initialize the cc1101!
-    cc1101.setDRate(4.0);
-    cc1101.setRxBW(16);
-    cc1101.setCCMode(0);
-    cc1101.setModulation(2);  // set modulation mode, 2 = ASK/OOK
-    cc1101.setMHZ(433.92);
-    cc1101.SetRx();
 
     RemoteControlInit();
 }
@@ -53,7 +54,7 @@ void setup()
 void loop()
 {
     NetworkTick();
-    Blink();
+    Blink(error);
     BleScanLoop();
     if (RemoteControlCheck()) {
         Serial.println("Ruft");

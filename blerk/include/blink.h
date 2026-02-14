@@ -1,2 +1,2 @@
 #pragma once
-void Blink();
+void Blink(bool error);
