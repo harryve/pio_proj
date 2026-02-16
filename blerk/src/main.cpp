@@ -53,11 +53,17 @@ void setup()
 
 void loop()
 {
+    unsigned long interruptCount;
+
     NetworkTick();
     Blink(error);
     BleScanLoop();
     if (RemoteControlCheck()) {
         Serial.println("Ruft");
         NetworkPublishPressed(1);
+    }
+    if (RemoteControlInterruptCount(&interruptCount)) {
+        Serial.printf("Interrupt count = %ld\n", interruptCount);
+        NetworkPublishInterruptCount(interruptCount);
     }
 }

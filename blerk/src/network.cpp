@@ -21,7 +21,7 @@ void NetworkInit()
     // Connect to Wi-Fi
     WiFi.setHostname("blerk");
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-    
+
     while (timo-- > 0 && WiFi.status() != WL_CONNECTED) {
         delay(500);
         Serial.print(".");
@@ -90,10 +90,20 @@ void NetworkTick()
 
 void NetworkPublishPressed(int val)
 {
-    char buf[16];
+    char buf[32];
 
     mqttClient.beginMessage("blerk/button");
     buf[snprintf(buf, sizeof(buf) - 1, "%d", val)] = '\0';
+    mqttClient.print(buf);
+    mqttClient.endMessage();
+}
+
+void NetworkPublishInterruptCount(unsigned long interruptCount)
+{
+    char buf[32];
+
+    mqttClient.beginMessage("blerk/interrupts");
+    buf[snprintf(buf, sizeof(buf) - 1, "%ld", interruptCount)] = '\0';
     mqttClient.print(buf);
     mqttClient.endMessage();
 }

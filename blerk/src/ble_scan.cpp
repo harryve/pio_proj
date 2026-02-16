@@ -59,7 +59,7 @@ void BleScanLoop()
         float h = (msg[2] / 10.0);
         float p = (msg[3] / 10.0);
         float v = (msg[4] / 1000.0);
-        Serial.printf(" t=%.1f, h=%.1f, p=%.1f, v=%.3f\n", t, h, p, v);
+        Serial.printf(" t=%.1f, h=%.1f, p=%.1f, v=%.3f,", t, h, p, v);
         Serial.printf(" runtime=%d, boot count=%d\n", msg[5], msg[6]);
         uint32_t seqNr = msg[6];
         if (lastSeqNr != seqNr) {

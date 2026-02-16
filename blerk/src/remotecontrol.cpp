@@ -33,6 +33,8 @@
 #define MIN_CODE_COUNT  10
 
 static unsigned long interruptCount = 0;
+static unsigned long totalInterrupts = 0;
+
 typedef struct {
 //    int state;
     unsigned long micros;
@@ -165,6 +167,7 @@ bool RemoteControlCheck()
             if (interruptCount > 0) {
                 detachInterrupt(SERIAL_DATA_PIN);
                 res = Decode();
+                totalInterrupts += interruptCount;
                 interruptCount = 0;
                 prevCount = 0;
                 attachInterrupt(SERIAL_DATA_PIN, DataHandler, RISING);
@@ -172,4 +175,18 @@ bool RemoteControlCheck()
         }
     }
     return res;
+}
+
+bool RemoteControlInterruptCount(unsigned long *pCount)
+{
+    static unsigned long prevMillis = 0;
+    unsigned long currentMillis = millis();
+    if (currentMillis - prevMillis > 60000) {   // Each minute
+        prevMillis = currentMillis;
+        *pCount = totalInterrupts;
+        totalInterrupts = 0;
+        return true;
+    }
+
+    return false;
 }
