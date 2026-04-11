@@ -1,14 +1,20 @@
 #include <Arduino.h>
 #include <Adafruit_BME280.h>
 #include "display.h"
+#include "co2sensor.h"
 #include "timesync.h"
 #include "network.h"
 #include "log.h"
 
-#define PIR_SENSOR  D7
-#define LED_PIN     D2
-#define LED_ON      LOW
-#define LED_OFF     HIGH
+#define RADAR_SENSOR    D7
+#define LED_PIN         D2
+#define LED_ON          LOW
+#define LED_OFF         HIGH
+
+#define SENSOR_READ_INTERVAL    10000                               // In milli seconds
+#define SENSOR_PUBLISH_INTERVAL ((5 * 60 * 1000) / SENSOR_READ_INTERVAL)    // Loop count
+#define LOOP_DELAY              100                                 // milli seconds
+#define STATE_PUBLISH_INTERVAL  (5 * 60 * 1000)                     // milli seconds
 
 static Adafruit_BME280 bme;
 static Display display;
@@ -17,6 +23,27 @@ static float OneDecimal(float raw)
 {
     int val = (int)round(raw * 10.0);
     return (float)val / 10.0;
+}
+
+static void ReadSensors()
+{
+    static int publishCountDown = 0;
+    static unsigned long sensorReadTime;
+
+    if (millis() - sensorReadTime > SENSOR_READ_INTERVAL) {
+        sensorReadTime = millis();
+        float temperature = OneDecimal(bme.readTemperature());               // °C
+        float humidity    = OneDecimal(bme.readHumidity());                  // %
+        float pressure    = OneDecimal(bme.readPressure() / 100.0);          // hPa
+        display.SetTemperature(temperature);
+        if (--publishCountDown <= 0) {
+            publishCountDown = SENSOR_PUBLISH_INTERVAL;
+            int co2 = Co2SensorMeasure();
+            PublishSensor(temperature, humidity, pressure, co2);
+            LOG("T=%.1f H=%.1f P=%.1f co2=%d\n", temperature, humidity, pressure, co2);
+        }
+    }
+
 }
 
 void setup()
@@ -28,6 +55,9 @@ void setup()
 
     Serial.begin(115200);
     LOG("\n\nStart klokkie " __DATE__ ", " __TIME__ "\n");
+
+    Co2SensorSetup();
+
     display.Init();
     delay(2000); // Time to read display
 
@@ -39,7 +69,7 @@ void setup()
         LOG("BME280 not found!\n");
     }
 
-    pinMode(PIR_SENSOR, INPUT);
+    pinMode(RADAR_SENSOR, INPUT);
 
     TimeSyncInit();
 
@@ -48,69 +78,54 @@ void setup()
     digitalWrite(LED_BUILTIN, LED_OFF);
 }
 
-#define SENSOR_READ_INTERVAL    10000                               // In milli seconds
-#define SENSOR_PUBLISH_INTERVAL ((5 * 60 * 1000) / SENSOR_READ_INTERVAL)    // Loop count
-#define LOOP_DELAY              100                                 // milli seconds
-#define ON_TIME                 ((3 * 60 * 1000) / LOOP_DELAY)      // Loop count: (Minutes * seconds[ms]] / LOOP_DELAY
-#define STATE_PUBLISH_INTERVAL  (5 * 60 * 1000)                     // milli seconds
-
 void loop()
 {
-    static int onTime = 0;
+    static bool displayOn = false;
     static int dispSec;
-    static unsigned long sensorReadTime;
     static unsigned long statePublishTime;
-    static int publishCountDown = 0;
 
     tm timeinfo;
 
     NetworkTick();
 
-    if (digitalRead(PIR_SENSOR)) {
-        if (onTime == 0) {
+    if (digitalRead(RADAR_SENSOR)) {
+        // Something detected by radar sensor
+        if (!displayOn) {
+            displayOn = true;
+            digitalWrite(LED_BUILTIN, LED_ON);
+
+            PublishState(displayOn, TimeIsSynced());
             statePublishTime = millis();
-            PublishState(true, TimeIsSynced());
-            //digitalWrite(LED_BUILTIN, LED_ON);
         }
-        onTime = ON_TIME;
     }
+    else {
+        // No one there
+        if (displayOn) {
+            displayOn = false;
+            display.Off();
+            digitalWrite(LED_BUILTIN, LED_OFF);
 
-    if (millis() - sensorReadTime > SENSOR_READ_INTERVAL) {
-        sensorReadTime = millis();
-        float temperature = OneDecimal(bme.readTemperature());               // °C
-        float humidity    = OneDecimal(bme.readHumidity());                  // %
-        float pressure    = OneDecimal(bme.readPressure() / 100.0);          // hPa
-        display.SetTemperature(temperature);
-        if (--publishCountDown <= 0) {
-            publishCountDown = SENSOR_PUBLISH_INTERVAL;
-            PublishSensor(temperature, humidity, pressure);
-            LOG("T=%.1f H=%.1f P=%.1f\n", temperature, humidity, pressure);
+            PublishState(displayOn, TimeIsSynced());
+            statePublishTime = millis();
         }
     }
 
-    if (onTime > 0) {
+    ReadSensors();
+
+    if (displayOn) {
         if (getLocalTime(&timeinfo)) {
             if (dispSec != timeinfo.tm_sec) {
                 dispSec = timeinfo.tm_sec;
                 //LOG("Ontime = %d, perc = %d\n", onTime, (onTime * 100) / ON_TIME);
                 display.SetTime(timeinfo.tm_hour, timeinfo.tm_min, dispSec);
-                display.Show((onTime * 100) / ON_TIME, TimeIsSynced());
+                display.Show(100, TimeIsSynced());
             }
         }
-        onTime--;
-        if (onTime == 0) {
-            statePublishTime = millis();
-            PublishState(false, TimeIsSynced());
-            display.Off();
-            digitalWrite(LED_BUILTIN, LED_OFF);
-            LOG("Off\n");
-        }
     }
-    else {
-        if (millis() - statePublishTime > STATE_PUBLISH_INTERVAL) {
-            PublishState(false, TimeIsSynced());
-            statePublishTime = millis();
-        }
+
+    if (millis() - statePublishTime > STATE_PUBLISH_INTERVAL) {
+        PublishState(false, TimeIsSynced());
+        statePublishTime = millis();
     }
 
     delay(LOOP_DELAY);

@@ -4,7 +4,7 @@ void NetworkInit();
 void NetworkTick();
 
 void PublishState(bool present, bool timeSynced);
-void PublishSensor(float temperature, float humidity, float pressure);
+void PublishSensor(float temperature, float humidity, float pressure, int co2);
 
 #define NWK_NO_WIFI 0x01
 #define NWK_NO_MQTT 0x02

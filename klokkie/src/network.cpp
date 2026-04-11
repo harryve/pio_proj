@@ -93,12 +93,13 @@ void PublishState(bool present, bool timeSynced)
     mqttClient.endMessage();
 }
 
-void PublishSensor(float temperature, float humidity, float pressure)
+void PublishSensor(float temperature, float humidity, float pressure, int co2)
 {
     JsonDocument json;
     json["Temperature"] = temperature;
     json["Humidity"] = humidity;
     json["Pressure"] = pressure;
+    json["CO2"] = co2;
     char jsonBuffer[128];
     serializeJson(json, jsonBuffer);
 
