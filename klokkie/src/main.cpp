@@ -43,7 +43,21 @@ static void ReadSensors()
             LOG("T=%.1f H=%.1f P=%.1f co2=%d\n", temperature, humidity, pressure, co2);
         }
     }
+}
 
+static void UpdateDisplay()
+{
+    static int dispSec = -1;
+    tm timeinfo;
+
+    if (getLocalTime(&timeinfo)) {
+        if (dispSec != timeinfo.tm_sec) {
+            dispSec = timeinfo.tm_sec;
+            //LOG("Ontime = %d, perc = %d\n", onTime, (onTime * 100) / ON_TIME);
+            display.SetTime(timeinfo.tm_hour, timeinfo.tm_min, dispSec);
+            display.Show(100, TimeIsSynced());
+        }
+    }
 }
 
 void setup()
@@ -80,51 +94,41 @@ void setup()
 
 void loop()
 {
-    static bool displayOn = false;
-    static int dispSec;
+    static bool present = false;
     static unsigned long statePublishTime;
-
-    tm timeinfo;
 
     NetworkTick();
 
     if (digitalRead(RADAR_SENSOR)) {
         // Something detected by radar sensor
-        if (!displayOn) {
-            displayOn = true;
+        if (!present) {
+            present = true;
             digitalWrite(LED_BUILTIN, LED_ON);
 
-            PublishState(displayOn, TimeIsSynced());
+            PublishState(present, TimeIsSynced());
             statePublishTime = millis();
         }
     }
     else {
         // No one there
-        if (displayOn) {
-            displayOn = false;
+        if (present) {
+            present = false;
             display.Off();
             digitalWrite(LED_BUILTIN, LED_OFF);
 
-            PublishState(displayOn, TimeIsSynced());
+            PublishState(present, TimeIsSynced());
             statePublishTime = millis();
         }
     }
 
     ReadSensors();
 
-    if (displayOn) {
-        if (getLocalTime(&timeinfo)) {
-            if (dispSec != timeinfo.tm_sec) {
-                dispSec = timeinfo.tm_sec;
-                //LOG("Ontime = %d, perc = %d\n", onTime, (onTime * 100) / ON_TIME);
-                display.SetTime(timeinfo.tm_hour, timeinfo.tm_min, dispSec);
-                display.Show(100, TimeIsSynced());
-            }
-        }
+    if (present) {
+        UpdateDisplay();
     }
 
     if (millis() - statePublishTime > STATE_PUBLISH_INTERVAL) {
-        PublishState(false, TimeIsSynced());
+        PublishState(present, TimeIsSynced());
         statePublishTime = millis();
     }
 
