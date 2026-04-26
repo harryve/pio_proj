@@ -11,7 +11,7 @@
 #define LED_ON          LOW
 #define LED_OFF         HIGH
 
-#define SENSOR_READ_INTERVAL    10000                               // In milli seconds
+#define SENSOR_READ_INTERVAL    30000                               // In milli seconds
 #define SENSOR_PUBLISH_INTERVAL ((5 * 60 * 1000) / SENSOR_READ_INTERVAL)    // Loop count
 #define LOOP_DELAY              100                                 // milli seconds
 #define STATE_PUBLISH_INTERVAL  (5 * 60 * 1000)                     // milli seconds
@@ -29,6 +29,8 @@ static void ReadSensors()
 {
     static int publishCountDown = 0;
     static unsigned long sensorReadTime;
+    static int totalCo2 = 0;
+    static int co2Samples = 0;
 
     if (millis() - sensorReadTime > SENSOR_READ_INTERVAL) {
         sensorReadTime = millis();
@@ -36,11 +38,27 @@ static void ReadSensors()
         float humidity    = OneDecimal(bme.readHumidity());                  // %
         float pressure    = OneDecimal(bme.readPressure() / 100.0);          // hPa
         display.SetTemperature(temperature);
+
+        int co2 = Co2SensorMeasure();
+        if (co2 > 0) {
+            totalCo2 += co2;
+            co2Samples++;
+            LOG("co2=%d total=%d, count=%d\n", co2, totalCo2, co2Samples);
+        }
         if (--publishCountDown <= 0) {
+            int avgCo2;
+            if (co2Samples > 0) {
+                avgCo2 = totalCo2 / co2Samples;
+            }
+            else {
+                avgCo2 = 0;
+            }
+            totalCo2 = 0;
+            co2Samples = 0;
+
             publishCountDown = SENSOR_PUBLISH_INTERVAL;
-            int co2 = Co2SensorMeasure();
-            PublishSensor(temperature, humidity, pressure, co2);
-            LOG("T=%.1f H=%.1f P=%.1f co2=%d\n", temperature, humidity, pressure, co2);
+            PublishSensor(temperature, humidity, pressure, avgCo2);
+            LOG("T=%.1f H=%.1f P=%.1f co2=%d\n", temperature, humidity, pressure, avgCo2);
         }
     }
 }
