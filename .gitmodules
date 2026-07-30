@@ -1,3 +1,6 @@
 [submodule "mousy/lib/TFT_eSPI"]
 	path = mousy/lib/TFT_eSPI
 	url = git@github.com:Bodmer/TFT_eSPI.git
+[submodule "dashboard/lib/TFT_eSPI"]
+	path = dashboard/lib/TFT_eSPI
+	url = https://github.com/Bodmer/TFT_eSPI.git
