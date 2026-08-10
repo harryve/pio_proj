@@ -100,7 +100,13 @@ void setup()
     if (!bme.begin(0x76)) {
         LOG("BME280 not found!\n");
     }
-
+    bme.setSampling(Adafruit_BME280::MODE_FORCED,
+                    Adafruit_BME280::SAMPLING_X1, // temperature
+                    Adafruit_BME280::SAMPLING_X1, // pressure
+                    Adafruit_BME280::SAMPLING_X1, // humidity
+                    Adafruit_BME280::FILTER_OFF   );                  
+    // suggested rate is 1/60Hz (1m)
+    
     pinMode(RADAR_SENSOR, INPUT);
 
     TimeSyncInit();
