@@ -16,7 +16,7 @@ Display::Display()
 {
 }
 
-void Display::Init()
+void Display::Init(const char *pDate, const char *pTime)
 {
     driver.begin(I2C_ADDRESS, true);    // Address 0x3C default
     driver.setContrast (0);             // dim display
@@ -27,9 +27,9 @@ void Display::Init()
     driver.print("Klokkie");
     driver.setTextSize(1);
     driver.setCursor(0, 40);
-    driver.print(__DATE__);
+    driver.print(pDate);
     driver.setCursor(0, 50);
-    driver.print(__TIME__);
+    driver.print(pTime);
     driver.display();
 }
 

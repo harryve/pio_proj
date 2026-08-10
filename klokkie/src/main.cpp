@@ -11,7 +11,7 @@
 #define LED_ON          LOW
 #define LED_OFF         HIGH
 
-#define SENSOR_READ_INTERVAL    30000                               // In milli seconds
+#define SENSOR_READ_INTERVAL    (60 * 1000)                          // In milli seconds
 #define SENSOR_PUBLISH_INTERVAL ((5 * 60 * 1000) / SENSOR_READ_INTERVAL)    // Loop count
 #define LOOP_DELAY              100                                 // milli seconds
 #define STATE_PUBLISH_INTERVAL  (5 * 60 * 1000)                     // milli seconds
@@ -84,13 +84,12 @@ void setup()
     digitalWrite(LED_BUILTIN, LED_ON);
 
     delay(250); // wait for the OLED to power up
-
     Serial.begin(115200);
     LOG("\n\nStart klokkie " __DATE__ ", " __TIME__ "\n");
 
     Co2SensorSetup();
 
-    display.Init();
+    display.Init(__DATE__, __TIME__);
     delay(2000); // Time to read display
 
     NetworkInit();
@@ -104,9 +103,9 @@ void setup()
                     Adafruit_BME280::SAMPLING_X1, // temperature
                     Adafruit_BME280::SAMPLING_X1, // pressure
                     Adafruit_BME280::SAMPLING_X1, // humidity
-                    Adafruit_BME280::FILTER_OFF   );                  
+                    Adafruit_BME280::FILTER_OFF   );
     // suggested rate is 1/60Hz (1m)
-    
+
     pinMode(RADAR_SENSOR, INPUT);
 
     TimeSyncInit();
