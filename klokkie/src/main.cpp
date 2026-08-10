@@ -34,6 +34,7 @@ static void ReadSensors()
 
     if (millis() - sensorReadTime > SENSOR_READ_INTERVAL) {
         sensorReadTime = millis();
+        bme.takeForcedMeasurement();
         float temperature = OneDecimal(bme.readTemperature());               // °C
         float humidity    = OneDecimal(bme.readHumidity());                  // %
         float pressure    = OneDecimal(bme.readPressure() / 100.0);          // hPa
