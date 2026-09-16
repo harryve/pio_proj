@@ -80,7 +80,7 @@ void MandelBrot(int max_iteration)
         xx = xtemp;
         iteration++;
       }
-      int color = rainbow((3*iteration+64)%256);
+      int color = rainbow((3*iteration+64)%128);
       yield();tft.drawPixel(px, py, color);
     }
   }

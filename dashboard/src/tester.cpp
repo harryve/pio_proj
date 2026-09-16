@@ -3,6 +3,7 @@
 #include "monutil.h"
 #include "display.h"
 #include "mandelbrot.h"
+#include "julia.h"
 
 static void PanicTest(int argc, char *argv[])
 {
@@ -29,6 +30,26 @@ static void DoMandelBrot(int argc, char *argv[])
             return;
         }
         MandelBrot(maxIter);
+    }
+}
+
+static void DoJulia(int argc, char *argv[])
+{
+    int zoom;
+
+    if (argc == 1) {
+        julia(2.0);
+    }
+    else {
+        if (!xatoi(argv[1], &zoom)) {
+            Serial.printf("Invalid max zoom value\n");
+            return;
+         }
+         if (zoom < 1 || zoom > 1000) {
+            Serial.printf("Invalid zoom %d, must be in [1..1000]\n", zoom);
+            return;
+         }
+         julia(zoom/10.0);
     }
 }
 
@@ -59,7 +80,8 @@ Cmds cmdTable[] = {
         { "assert",     AssertTest,         0, 0, "(Test TlAssert functionality)" },
         { "display",    DoDisplay,          4, 4, "x y font text"},
         { "help",       DoHelp,             0, 0, "(This help menu)" },
-        { "mandelbrot", DoMandelBrot,       0, 1, "My first Mandelbrot" },
+        { "julia",      DoJulia,            0, 1, "[zoom] My first Julia" },
+        { "mandelbrot", DoMandelBrot,       0, 1, "[max_iterations] My first Mandelbrot" },
         { "memory",     DoMemDump,          0, 2, "[addr] [length]" },
         { "panic",      PanicTest,          0, 1, "[message] (Panic function test)" },
         { "?",          DoHelp,             0, 0, "(Short help menu)" },
