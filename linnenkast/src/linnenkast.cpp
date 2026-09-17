@@ -44,5 +44,6 @@ void loop()
         digitalWrite(LED_ON_BOARD, light.On() ? LED_ON : LED_OFF);
 
         NetworkPublish(light.Door(), light.On(), NetworkSignalStrength());
+        WebServerPublish(light.Door(), light.On(), NetworkSignalStrength());
     }
 }
